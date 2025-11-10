@@ -8,13 +8,20 @@ import Aurora from "@/components/aurora"
 import { FloatingParticles } from "@/components/floating-particles"
 
 export default function Home() {
-  const [messages, setMessages] = useState([
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
+  type Message = {
+    id: string
+    role: "assistant" | "user"
+    content: string
+    sources?: string[]
+    timestamp: Date
+  }
+  const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
       role: "assistant",
       content:
         "السلام عليكم ورحمة الله وبركاته\n\nWelcome to the Sistani Jurisprudence Assistant. I am here to help answer your Islamic jurisprudence questions based on the rulings of Ayatullah al-Sistani. Feel free to ask about Islamic law, worship, and daily practices.",
-      sources: [],
       timestamp: new Date(),
     },
   ])
@@ -33,12 +40,11 @@ export default function Home() {
   const handleSendMessage = async (text: string) => {
     if (!text.trim()) return
 
-    const userMessage = {
+    const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
       content: text,
       timestamp: new Date(),
-      sources: [],
     }
 
     setMessages((prev) => [...prev, userMessage])
@@ -46,7 +52,7 @@ export default function Home() {
     setLoading(true)
 
     try {
-      const response = await fetch("http://localhost:8000/chat", {
+      const response = await fetch(`${BACKEND_URL}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: text, top_k: 3 }),
@@ -55,7 +61,7 @@ export default function Home() {
       if (!response.ok) throw new Error("API Error")
       const data = await response.json()
 
-      const assistantMessage = {
+      const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
         content: data.answer,
@@ -72,7 +78,6 @@ export default function Home() {
           id: (Date.now() + 2).toString(),
           role: "assistant",
           content: "Sorry, I encountered an error. Please try again or check the connection to the API.",
-          sources: [],
           timestamp: new Date(),
         },
       ])

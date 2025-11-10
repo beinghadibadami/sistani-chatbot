@@ -6,3 +6,6 @@ numpy
 tqdm
 python-dotenv
 requests
+fastapi
+uvicorn
+pydantic
