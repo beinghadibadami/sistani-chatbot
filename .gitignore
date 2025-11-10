@@ -1,0 +1,149 @@
+# ---------------------------------------------------------
+# ✅ NEXT.JS / NODE FRONTEND
+# ---------------------------------------------------------
+
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build output
+.next/
+out/
+dist/
+build/
+
+# Production environment
+.env.local
+.env.production
+.env.development
+.env
+
+# Vercel / Deployment files
+.vercel/
+.vercel_build_output/
+
+# Misc
+*.tsbuildinfo
+
+# Cache
+.next/cache/
+.cache/
+.eslintcache
+.stylelintcache
+
+# Editor
+.vscode/
+.idea/
+
+
+# ---------------------------------------------------------
+# ✅ PYTHON BACKEND (FASTAPI / RAG / FAISS)
+# ---------------------------------------------------------
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.venv/
+ENV/
+python_env/
+
+# Jupyter notebooks
+.ipynb_checkpoints
+
+# Python environments
+Pipfile.lock
+poetry.lock
+
+# Environment variables
+.env
+.env.*
+
+# Build artifacts
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Python cache
+cache/
+*.log
+
+# PyInstaller
+*.spec
+
+# MyPy
+.mypy_cache/
+
+# PyTest
+.pytest_cache/
+
+# Coverage files
+htmlcov/
+.coverage
+.coverage.*
+.cache/
+nosetests.xml
+coverage.xml
+
+
+# ---------------------------------------------------------
+# ✅ RAG-SPECIFIC FILES (OPTIONAL)
+# Uncomment if you DO NOT want to commit FAISS index/chunks
+# ---------------------------------------------------------
+
+# FAISS indexes
+# *.index
+
+# Pickle files (your chunks)
+# *.pkl
+
+# Vector DB backups
+# vectors/
+# embeddings/
+
+# PDF data (if needed)
+# data/*.pdf
+
+
+# ---------------------------------------------------------
+# ✅ OS / EDITOR TRASH
+# ---------------------------------------------------------
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
