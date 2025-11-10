@@ -17,7 +17,6 @@ from tqdm.auto import tqdm
 from groq import Groq
 
 import PyPDF2
-from sentence_transformers import SentenceTransformer
 import faiss
 import numpy as np
 import requests
@@ -31,12 +30,62 @@ load_dotenv()
 DATA_DIR = "./data"
 INDEX_FILE = "sistani_faiss_with_qna.index"
 CHUNKS_FILE = "sistani_new_chunks.pkl"
-EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 200
 TOP_K = 5
 GROQ_API_KEY = os.getenv('GROQ_API_KEY')
 GROQ_MODEL = "openai/gpt-oss-120b"  # or any available Groq model
+# Hugging Face Inference API (feature-extraction) for embeddings
+HF_TOKEN = os.getenv("HF_TOKEN")
+HF_API_URL = "https://router.huggingface.co/hf-inference/models/BAAI/bge-small-en/pipeline/feature-extraction"
+# ----------------------------
+
+# ---------------- EMBEDDING VIA HF INFERENCE API ----------------
+def _hf_embed_single(text: str) -> np.ndarray:
+    """
+    Get an embedding vector for a single text using HF Inference API.
+    Handles both token-level outputs (applies mean pooling) and single-vector outputs.
+    """
+    if not HF_TOKEN:
+        raise RuntimeError("HF_TOKEN is not set in environment.")
+
+    headers = {
+        "Authorization": f"Bearer {HF_TOKEN}",
+    }
+    resp = requests.post(HF_API_URL, headers=headers, json={"inputs": text})
+    resp.raise_for_status()
+    data = resp.json()
+
+    # Possible shapes:
+    # - [hidden] -> already pooled sentence embedding
+    # - [[hidden], [hidden], ...] -> per-token embeddings, need mean-pooling
+    if isinstance(data, list):
+        if len(data) == 0:
+            raise ValueError("Empty embedding returned from HF Inference API.")
+        if isinstance(data[0], list):
+            # token-level -> mean pool
+            arr = np.array(data, dtype=np.float32)
+            return arr.mean(axis=0)
+        else:
+            # already a vector
+            return np.array(data, dtype=np.float32)
+    else:
+        # Unexpected shape
+        raise ValueError(f"Unexpected embedding response format: {type(data)}")
+
+def embed_texts(texts: list[str]) -> np.ndarray:
+    """
+    Embed a list of texts. Returns a 2D numpy array (n_texts, dim).
+    Sequential calls to keep API simple and robust.
+    """
+    vectors: list[np.ndarray] = []
+    for t in tqdm(texts, desc="Embedding", leave=False):
+        vectors.append(_hf_embed_single(t))
+    # Ensure consistent dimension
+    dims = {v.shape[0] for v in vectors}
+    if len(dims) != 1:
+        raise ValueError(f"Inconsistent embedding dims returned: {dims}")
+    return np.stack(vectors, axis=0)
 # ----------------------------
 
 # ---------------- LOADING & CHUNKING ----------------
@@ -59,8 +108,7 @@ def chunk_text(text, chunk_size=CHUNK_SIZE, overlap=CHUNK_OVERLAP):
     return chunks
 
 def build_embeddings():
-    print("🔹 Loading embedding model...")
-    model = SentenceTransformer(EMBED_MODEL)
+    print("🔹 Preparing to build embeddings with Hugging Face Inference API...")
 
     all_chunks = []
     file_sources = []
@@ -75,8 +123,8 @@ def build_embeddings():
 
     print(f"Total chunks: {len(all_chunks)}")
 
-    print("🧠 Embedding chunks...")
-    embeddings = model.encode(all_chunks, show_progress_bar=True, convert_to_numpy=True)
+    print("🧠 Embedding chunks via HF Inference API...")
+    embeddings = embed_texts(all_chunks)
 
     print("💾 Building FAISS index...")
     dim = embeddings.shape[1]
@@ -95,11 +143,11 @@ def load_index():
     index = faiss.read_index(INDEX_FILE)
     with open(CHUNKS_FILE, "rb") as f:
         chunks, sources = pickle.load(f)
-    model = SentenceTransformer(EMBED_MODEL)
-    return index, chunks, sources, model
+    # No local model; use HF API for embeddings
+    return index, chunks, sources
 
-def search_similar(query, index, chunks, sources, model, k=TOP_K):
-    q_emb = model.encode([query], convert_to_numpy=True)
+def search_similar(query, index, chunks, sources, k=TOP_K):
+    q_emb = embed_texts([query]).astype(np.float32)
     D, I = index.search(q_emb, k)
     results = []
     for idx in I[0]:

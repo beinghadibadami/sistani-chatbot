@@ -64,11 +64,11 @@ def render_messages():
 
 
 def answer_question(user_question: str):
-    # Lazy-load index and model
-    index, chunks, sources, model = cached_load_index()
+    # Lazy-load index
+    index, chunks, sources = cached_load_index()
 
     # Retrieve chunks
-    top_chunks = search_similar(user_question, index, chunks, sources, model, k=DEFAULT_TOP_K)
+    top_chunks = search_similar(user_question, index, chunks, sources, k=DEFAULT_TOP_K)
 
     answer = generate_answer(top_chunks, user_question)
 
