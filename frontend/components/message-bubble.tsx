@@ -1,6 +1,7 @@
 "use client"
 
 import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 
 interface MessageBubbleProps {
   role: "user" | "assistant"
@@ -21,6 +22,7 @@ export default function MessageBubble({ role, content }: MessageBubbleProps) {
       >
         <div className="prose dark:prose-invert prose-sm max-w-none">
           <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
             components={{
               p: ({ node, ...props }) => <p className="mb-2 last:mb-0 leading-relaxed" {...props} />,
               strong: ({ node, ...props }) => (
@@ -31,6 +33,18 @@ export default function MessageBubble({ role, content }: MessageBubbleProps) {
               ul: ({ node, ...props }) => <ul className="list-disc list-inside space-y-1 mb-2" {...props} />,
               ol: ({ node, ...props }) => <ol className="list-decimal list-inside space-y-1 mb-2" {...props} />,
               li: ({ node, ...props }) => <li className="text-sm" {...props} />,
+              table: ({ node, ...props }) => (
+                <div className="overflow-x-auto my-2">
+                  <table className="min-w-full text-sm border border-border rounded-md" {...props} />
+                </div>
+              ),
+              thead: ({ node, ...props }) => <thead className="bg-muted/40" {...props} />,
+              tbody: ({ node, ...props }) => <tbody {...props} />,
+              tr: ({ node, ...props }) => <tr className="border-b last:border-0" {...props} />,
+              th: ({ node, ...props }) => (
+                <th className="text-left px-3 py-2 font-semibold border-r last:border-r-0" {...props} />
+              ),
+              td: ({ node, ...props }) => <td className="px-3 py-2 align-top border-r last:border-r-0" {...props} />,
             }}
           >
             {content}
