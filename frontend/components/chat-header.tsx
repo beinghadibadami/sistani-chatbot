@@ -19,6 +19,10 @@ export default function ChatHeader() {
         <p className="text-center text-foreground/70 text-sm sm:text-base leading-relaxed">
           Ask questions about Islamic jurisprudence based on the scholarly rulings of Ayatullah al-Sistani
         </p>
+        <p className="mt-2 text-center text-xs sm:text-sm text-foreground/60">
+          Disclaimer: Answers are AI-generated. While we strive for accuracy, errors may occur. Please always refer to
+          listed sources, the official website of your Marja&apos;, or consult a scholar.
+        </p>
 
         {/* Decorative geometric lines - subtle Islamic pattern */}
         <div className="mt-4 flex justify-center gap-2 opacity-30">
