@@ -1,44 +1,30 @@
-# ---------------------------------------------------------
-# ✅ NEXT.JS / NODE FRONTEND
-# ---------------------------------------------------------
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# Dependencies
-node_modules/
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
+.pnpm-debug.log*
 
-# Build output
-.next/
-out/
-dist/
-build/
+# env files
+.env*
 
-# Production environment
-.env.local
-.env.production
-.env.development
-.env
+# vercel
+.vercel
 
-# Vercel / Deployment files
-.vercel/
-.vercel_build_output/
-
-# Misc
+# typescript
 *.tsbuildinfo
-
-# Cache
-.next/cache/
-.cache/
-.eslintcache
-.stylelintcache
-
-# Editor
-.vscode/
-.idea/
-
-
+next-env.d.ts
 # ---------------------------------------------------------
 # ✅ PYTHON BACKEND (FASTAPI / RAG / FAISS)
 # ---------------------------------------------------------
@@ -65,85 +51,3 @@ poetry.lock
 # Environment variables
 .env
 .env.*
-
-# Build artifacts
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Python cache
-cache/
-*.log
-
-# PyInstaller
-*.spec
-
-# MyPy
-.mypy_cache/
-
-# PyTest
-.pytest_cache/
-
-# Coverage files
-htmlcov/
-.coverage
-.coverage.*
-.cache/
-nosetests.xml
-coverage.xml
-
-
-# ---------------------------------------------------------
-# ✅ RAG-SPECIFIC FILES (OPTIONAL)
-# Uncomment if you DO NOT want to commit FAISS index/chunks
-# ---------------------------------------------------------
-
-# FAISS indexes
-# *.index
-
-# Pickle files (your chunks)
-# *.pkl
-
-# Vector DB backups
-# vectors/
-# embeddings/
-
-# PDF data (if needed)
-# data/*.pdf
-
-
-# ---------------------------------------------------------
-# ✅ OS / EDITOR TRASH
-# ---------------------------------------------------------
-
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
-
-# Windows
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-
-# Linux
-*~
-
-# Logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-pnpm-debug.log*
-lerna-debug.log*
