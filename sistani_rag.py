@@ -32,7 +32,7 @@ INDEX_FILE = "sistani_faiss_with_qna.index"
 CHUNKS_FILE = "sistani_new_chunks.pkl"
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 200
-TOP_K = 5
+TOP_K = 10
 GROQ_API_KEY = os.getenv('GROQ_API_KEY')
 GROQ_MODEL = "openai/gpt-oss-120b"  # or any available Groq model
 # Hugging Face Inference API (feature-extraction) for embeddings
