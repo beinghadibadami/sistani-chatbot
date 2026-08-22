@@ -1,38 +1,129 @@
 "use client"
 
-export default function ChatHeader() {
+import { useEffect, useState } from "react"
+import { Info, RotateCcw, X } from "lucide-react"
+
+import ScopeFilter from "./scope-filter"
+import type { SourceInfo } from "@/lib/types"
+
+interface ChatHeaderProps {
+  sources: SourceInfo[]
+  scope: string[]
+  onScopeChange: (docIds: string[]) => void
+  onReset: () => void
+  hasMessages: boolean
+}
+
+export default function ChatHeader({
+  sources,
+  scope,
+  onScopeChange,
+  onReset,
+  hasMessages,
+}: ChatHeaderProps) {
+  const [showDisclaimer, setShowDisclaimer] = useState(false)
+  const [condensed, setCondensed] = useState(false)
+
+  // Collapse the header once a conversation is underway so the answers get the space.
+  useEffect(() => {
+    setCondensed(hasMessages)
+  }, [hasMessages])
+
   return (
-    <header className="border-b border-border/30 bg-white/35 dark:bg-slate-50/50 backdrop-blur-sm sticky top-0 z-10">
-      <div className="max-w-4xl mx-auto px-4 py-6 sm:px-6">
-        <div className="flex items-center justify-center mb-4 animate-fade-in">
-          {/* <div className="text-4xl mr-3"></div> */}
-          <h1
-            className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent"
-            style={{ backgroundSize: "200% 200%", animation: "gradientShift 8s ease infinite" }}
-      
-          >
-            Sistani Jurisprudence
-          </h1>
+    <header className="sticky top-0 z-20 border-b border-border/60 bg-background/80 backdrop-blur-xl">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6">
+        <div
+          className={`flex items-center justify-between gap-3 transition-all duration-500 ${
+            condensed ? "py-3" : "py-6"
+          }`}
+        >
+          <div className="flex min-w-0 items-center gap-3">
+            <Seal condensed={condensed} />
+            <div className="min-w-0">
+              <h1
+                className={`truncate font-display font-semibold tracking-tight text-foreground transition-all duration-500 ${
+                  condensed ? "text-lg" : "text-2xl sm:text-3xl"
+                }`}
+              >
+                Sistani Jurisprudence
+              </h1>
+              {!condensed && (
+                <p className="mt-0.5 font-serif text-sm text-muted-foreground animate-fade-in">
+                  Answers grounded in cited rulings, not paraphrase
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-1">
+            <ScopeFilter sources={sources} scope={scope} onChange={onScopeChange} />
+
+            <button
+              type="button"
+              onClick={() => setShowDisclaimer((v) => !v)}
+              aria-label="About this assistant"
+              aria-expanded={showDisclaimer}
+              className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            >
+              <Info className="h-4 w-4" />
+            </button>
+
+            {hasMessages && (
+              <button
+                type="button"
+                onClick={onReset}
+                aria-label="Start a new conversation"
+                className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Subtitle */}
-        <p className="text-center text-foreground/70 text-sm sm:text-base leading-relaxed">
-          Ask questions about Islamic jurisprudence based on the scholarly rulings of Ayatullah al-Sistani
-        </p>
-        <p className="mt-2 text-center text-xs sm:text-sm text-foreground/60">
-          Disclaimer: Answers are AI-generated. While we strive for accuracy, errors may occur. Please always refer to
-          listed sources, the official website of your Marja&apos;, or consult a scholar.
-        </p>
-
-        {/* Decorative geometric lines - subtle Islamic pattern */}
-        <div className="mt-4 flex justify-center gap-2 opacity-30">
-          <div className="w-1 h-6 bg-primary rounded-full"></div>
-          <div className="w-1 h-8 bg-secondary rounded-full"></div>
-          <div className="w-1 h-6 bg-accent rounded-full"></div>
-          <div className="w-1 h-8 bg-primary rounded-full"></div>
-          <div className="w-1 h-6 bg-secondary rounded-full"></div>
-        </div>
+        {showDisclaimer && (
+          <div className="animate-rise pb-4">
+            <div className="relative rounded-lg border border-gold/35 bg-gold/[0.06] p-3.5 pr-9">
+              <button
+                type="button"
+                onClick={() => setShowDisclaimer(false)}
+                aria-label="Dismiss"
+                className="absolute right-2 top-2 rounded p-1 text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+              <p className="font-serif text-[0.9rem] leading-relaxed text-foreground/85">
+                Answers are generated by an AI model from a fixed library of texts, and may be
+                incomplete or mistaken. Every answer lists the passages it drew on — expand
+                them to read the source directly. For any consequential matter, verify against
+                your Marja&apos;s official rulings or consult a qualified scholar.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
+
+      <div className="rule-gold" />
     </header>
+  )
+}
+
+/** Eight-point star seal, echoing the backdrop tessellation. */
+function Seal({ condensed }: { condensed: boolean }) {
+  return (
+    <span
+      className={`relative grid shrink-0 place-items-center transition-all duration-500 ${
+        condensed ? "h-8 w-8" : "h-11 w-11"
+      }`}
+    >
+      <span className="absolute inset-0 rounded-lg bg-primary/10" />
+      <svg viewBox="0 0 40 40" className="relative h-[62%] w-[62%]" aria-hidden="true">
+        <g fill="none" stroke="currentColor" strokeWidth="1.6" className="text-primary">
+          <rect x="9" y="9" width="22" height="22" />
+          <rect x="9" y="9" width="22" height="22" transform="rotate(45 20 20)" />
+        </g>
+        <circle cx="20" cy="20" r="3" className="fill-gold" />
+      </svg>
+    </span>
   )
 }

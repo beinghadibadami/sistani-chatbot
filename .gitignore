@@ -3,9 +3,12 @@
 # dependencies
 /node_modules
 
+*.pdf
+*.ipynb
 # next.js
 /.next/
 /out/
+data/
 
 # production
 /build
@@ -51,3 +54,15 @@ poetry.lock
 # Environment variables
 .env
 .env.*
+
+# ---------------------------------------------------------
+# INGESTION ARTIFACTS
+# ---------------------------------------------------------
+# Resumable embedding checkpoints are large and reproducible; the built index and
+# metadata DB under artifacts/ are intentionally NOT ignored, because deployment
+# ships the prebuilt index instead of rebuilding it on the host.
+artifacts/checkpoint/
+build_index.log
+backend.log
+frontend/npm-install.log
+frontend/next-build.log
