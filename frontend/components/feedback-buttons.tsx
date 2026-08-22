@@ -45,13 +45,13 @@ export default function FeedbackButtons({ rating, onSubmit }: FeedbackButtonsPro
           rows={2}
           maxLength={2000}
           placeholder="Incorrect ruling, wrong source, missing detail…"
-          className="mt-1.5 w-full resize-none rounded-md border border-border bg-input px-2.5 py-1.5 font-serif text-[0.85rem] text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-ring/40"
+          className="mt-1.5 w-full resize-none rounded-md border border-border bg-input px-2.5 py-1.5 font-serif text-base text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-ring/40"
         />
         <div className="mt-2 flex items-center gap-2">
           <button
             type="button"
             onClick={() => onSubmit(-1, comment.trim() || undefined)}
-            className="rounded-md bg-primary px-2.5 py-1 text-[0.75rem] font-medium text-primary-foreground transition-opacity hover:opacity-90"
+            className="min-h-[44px] rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 active:opacity-80"
           >
             Submit
           </button>
@@ -61,7 +61,7 @@ export default function FeedbackButtons({ rating, onSubmit }: FeedbackButtonsPro
               setPendingNegative(false)
               setComment("")
             }}
-            className="rounded-md px-2 py-1 text-[0.75rem] font-medium text-muted-foreground transition-colors hover:text-foreground"
+            className="min-h-[44px] rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground active:text-foreground"
           >
             Cancel
           </button>
@@ -77,17 +77,17 @@ export default function FeedbackButtons({ rating, onSubmit }: FeedbackButtonsPro
         type="button"
         onClick={() => onSubmit(1)}
         aria-label="Helpful"
-        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        className="grid min-h-[44px] min-w-[44px] place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary active:bg-primary/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       >
-        <ThumbsUp className="h-3.5 w-3.5" />
+        <ThumbsUp className="h-4 w-4" />
       </button>
       <button
         type="button"
         onClick={() => setPendingNegative(true)}
         aria-label="Not helpful"
-        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        className="grid min-h-[44px] min-w-[44px] place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive active:bg-destructive/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       >
-        <ThumbsDown className="h-3.5 w-3.5" />
+        <ThumbsDown className="h-4 w-4" />
       </button>
     </div>
   )

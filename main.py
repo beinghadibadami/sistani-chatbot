@@ -83,25 +83,66 @@ app.add_middleware(
 
 
 class PriorSource(BaseModel):
-    """A passage retrieved on an earlier turn, replayed by the client."""
+    """A passage retrieved on an earlier turn, replayed by the client.
 
-    citation: str
-    text: str
-    doc_id: str | None = None
-    chapter: str | None = None
-    section: str | None = None
-    locator: str | None = None
+    Length caps are security controls: these fields are inserted verbatim into a system
+    prompt, so an unbounded prior_sources.text would be an injection vector.
+    """
+
+    citation: str = Field(..., max_length=300)
+    text: str = Field(..., max_length=2000)
+    doc_id: str | None = Field(default=None, max_length=64)
+    chapter: str | None = Field(default=None, max_length=200)
+    section: str | None = Field(default=None, max_length=200)
+    locator: str | None = Field(default=None, max_length=100)
+
+
+# Maximum total character budget for all history turns combined. A single turn at
+# max_length=4000 × 6 turns = 24,000 chars of adversarial history is too much;
+# this cap makes history a bounded surface while still allowing long conversations.
+_HISTORY_MAX_CHARS = 12000
+# A single turn can be large (e.g. a full answer), but cap it to prevent one turn
+# dominating the budget and padding the prompt past the context limit.
+_HISTORY_TURN_MAX_CHARS = 3000
+
+
+def _sanitize_history(raw: list[dict[str, str]] | None) -> list[dict[str, str]]:
+    """Strip dangerous role values and enforce character budgets on history content.
+
+    Clients supply history and it is inserted directly into the prompt. Two vectors:
+    1. A crafted "assistant" turn that appears to authorise malicious behaviour.
+    2. A history turn with excessive length that expands the prompt beyond safe bounds.
+    This function constrains both without blocking legitimate multi-turn conversations.
+    """
+    if not raw:
+        return []
+    cleaned: list[dict[str, str]] = []
+    total = 0
+    for turn in raw:
+        role = (turn.get("role") or "").strip().lower()
+        if role not in ("user", "assistant"):
+            continue
+        content = (turn.get("content") or "").strip()
+        if not content:
+            continue
+        # Truncate individual turns rather than dropping them, so follow-up context
+        # is never silently lost; the model sees a slightly truncated previous answer
+        # rather than no context at all.
+        content = content[:_HISTORY_TURN_MAX_CHARS]
+        if total + len(content) > _HISTORY_MAX_CHARS:
+            break
+        cleaned.append({"role": role, "content": content})
+        total += len(content)
+    return cleaned
 
 
 class ChatRequest(BaseModel):
     question: str = Field(..., min_length=1, max_length=4000)
     top_k: int = DEFAULT_TOP_K
     history: list[dict[str, str]] | None = None
-    mode: str = "hybrid"
-    doc_ids: list[str] | None = None      # scope filter from the UI
+    mode: str = Field(default="hybrid", pattern=r"^(hybrid|dense|bm25)$")
+    doc_ids: list[str] | None = Field(default=None, max_length=7)
     prior_sources: list[PriorSource] | None = Field(default=None, max_length=8)
-    # Provider override for dev testing. In production this is ignored and the server's
-    # LLM_PROVIDER env var is used instead.
     provider: str | None = Field(default=None, pattern=r"^(groq|gemini)$")
 
 
@@ -163,13 +204,13 @@ def _prior_hits(payload: ChatRequest) -> list[Hit]:
     ]
 
 
-def _retrieve(retriever: Retriever, payload: ChatRequest):
+def _retrieve(retriever: Retriever, payload: ChatRequest, sanitized_history=None):
     """Search for the current question.
 
-    Query rewriting is available but off by default; follow-up context comes from
-    `prior_sources` instead, which costs prompt tokens rather than a round trip.
+    Uses sanitized_history for the rewrite call so the rewriter never sees raw
+    client-supplied history content.
     """
-    query, rewritten = rewrite_query(payload.question, payload.history)
+    query, rewritten = rewrite_query(payload.question, sanitized_history or [])
     hits = retriever.search(
         query,
         _clamp_k(payload.top_k),
@@ -226,9 +267,10 @@ async def chat(payload: ChatRequest):
     # Provider override is only used in dev; in prod LLM_PROVIDER env var applies.
     provider = payload.provider if os.getenv("ALLOW_PROVIDER_OVERRIDE") else None
     try:
-        hits, query, rewritten = await asyncio.to_thread(_retrieve, retriever, payload)
+        sanitized_history = _sanitize_history(payload.history)
+        hits, query, rewritten = await asyncio.to_thread(_retrieve, retriever, payload, sanitized_history)
         answer, followups = await asyncio.to_thread(
-            generate, payload.question, hits, payload.history, _prior_hits(payload), provider
+            generate, payload.question, hits, sanitized_history, _prior_hits(payload), provider
         )
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
@@ -247,6 +289,7 @@ async def chat(payload: ChatRequest):
 async def chat_stream(payload: ChatRequest):
     retriever = get_retriever()
     provider = payload.provider if os.getenv("ALLOW_PROVIDER_OVERRIDE") else None
+    sanitized_history = _sanitize_history(payload.history)
     prior = _prior_hits(payload)
 
     async def event_stream():
@@ -267,7 +310,7 @@ async def chat_stream(payload: ChatRequest):
             def produce():
                 try:
                     for kind, value in stream_generate(
-                        payload.question, hits, payload.history, prior, provider
+                        payload.question, hits, sanitized_history, prior, provider
                     ):
                         loop.call_soon_threadsafe(queue.put_nowait, (kind, value))
                 except Exception as exc:

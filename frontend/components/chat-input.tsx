@@ -66,7 +66,7 @@ export default function ChatInput({ onSendMessage, onStop, disabled, seed }: Cha
             onKeyDown={handleKeyDown}
             placeholder="Ask about rulings, worship, or a specific verse…"
             aria-label="Your question"
-            className="max-h-[168px] flex-1 resize-none bg-transparent py-1.5 font-serif text-[0.95rem] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/70 scrollbar-thin"
+            className="max-h-[168px] flex-1 resize-none bg-transparent py-1.5 font-serif text-base leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/70 scrollbar-thin"
           />
 
           {disabled ? (
@@ -74,18 +74,18 @@ export default function ChatInput({ onSendMessage, onStop, disabled, seed }: Cha
               type="button"
               onClick={onStop}
               aria-label="Stop generating"
-              className="mb-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-muted text-foreground transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              className="mb-0.5 grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-muted text-foreground transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
-              <Square className="h-3 w-3 fill-current" />
+              <Square className="h-3.5 w-3.5 fill-current" />
             </button>
           ) : (
             <button
               type="submit"
               disabled={!input.trim()}
               aria-label="Send question"
-              className="mb-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              className="mb-0.5 grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
-              <ArrowUp className="h-4 w-4" />
+              <ArrowUp className="h-4.5 w-4.5" />
             </button>
           )}
         </div>

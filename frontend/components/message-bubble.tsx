@@ -40,6 +40,14 @@ export default function MessageBubble({ role, content, streaming, error }: Messa
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={{
+              // Wrap tables in a scrollable container so wide tables don't force
+              // horizontal page scroll on narrow screens. Without this, a 5-column
+              // fiqh table (e.g. blood-money amounts) would overflow the 375px viewport.
+              table: ({ node, ...props }) => (
+                <div className="overflow-x-auto -mx-1 px-1 my-2">
+                  <table {...props} />
+                </div>
+              ),
               // Open any model-provided link safely.
               a: ({ node, ...props }) => (
                 <a {...props} target="_blank" rel="noopener noreferrer" />
@@ -83,7 +91,7 @@ function CopyButton({ text }: { text: string }) {
       type="button"
       onClick={copy}
       aria-label={copied ? "Copied" : "Copy answer"}
-      className="mt-2 inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[0.72rem] font-medium text-muted-foreground opacity-0 transition-all hover:bg-muted hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      className="mt-2 inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[0.72rem] font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:opacity-0 sm:group-hover:opacity-100"
     >
       {copied ? (
         <>

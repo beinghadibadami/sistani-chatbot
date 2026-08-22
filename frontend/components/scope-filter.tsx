@@ -53,18 +53,18 @@ export default function ScopeFilter({ sources, scope, onChange }: ScopeFilterPro
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-label="Filter sources"
-        className={`flex items-center gap-1.5 rounded-lg px-2 py-2 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
+        className={`grid min-h-[44px] min-w-[44px] place-items-center gap-1.5 rounded-lg text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
           active
             ? "bg-primary/12 text-primary"
             : "text-muted-foreground hover:bg-muted hover:text-foreground"
         }`}
       >
         <Library className="h-4 w-4" />
-        {active && <span className="tabular-nums">{scope.length}</span>}
+        {active && <span className="text-[0.6rem] tabular-nums">{scope.length}</span>}
       </button>
 
       {open && (
-        <div className="animate-rise absolute right-0 top-full z-30 mt-2 w-64 overflow-hidden rounded-xl border border-border bg-popover shadow-xl shadow-black/10">
+        <div className="animate-rise absolute right-0 top-full z-30 mt-2 w-[min(16rem,calc(100vw-1rem))] overflow-hidden rounded-xl border border-border bg-popover shadow-xl shadow-black/10">
           <div className="flex items-center justify-between border-b border-border/70 px-3 py-2">
             <span className="text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
               Search within
@@ -88,7 +88,7 @@ export default function ScopeFilter({ sources, scope, onChange }: ScopeFilterPro
                   <button
                     type="button"
                     onClick={() => toggle(s.doc_id)}
-                    className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-muted"
+                    className="flex w-full min-h-[44px] items-center gap-2.5 rounded-lg px-2 py-2.5 text-left transition-colors hover:bg-muted active:bg-muted"
                   >
                     <span
                       className={`grid h-4 w-4 shrink-0 place-items-center rounded border transition-colors ${
