@@ -4,3 +4,16 @@ groq
 numpy
 python-dotenv
 requests
+fastapi
+uvicorn
+pydantic
+
+# still used by the legacy sistani_rag.py pipeline; drop once that module is replaced
+PyPDF2
+
+# ingestion pipeline
+PyMuPDF==1.27.2.2
+tiktoken==0.14.0
+
+# llm providers
+google-genai>=1.73.1
