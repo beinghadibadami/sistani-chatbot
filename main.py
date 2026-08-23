@@ -28,15 +28,16 @@ from pydantic import BaseModel, Field
 
 load_dotenv()
 
-from ingest.base import DOC_TITLES
+from ingest.constants import DOC_TITLES
 from rag import feedback as feedback_store
+from rag.classify import QueryIntent, classify_query
 from rag.generate import GROQ_MODEL, generate, stream_generate
 from rag.providers import AVAILABLE_PROVIDERS, default_provider
 from rag.retrieve import Hit, Retriever
 from rag.rewrite import rewrite_query
 
 DEFAULT_TOP_K = 5
-MAX_TOP_K = 12
+MAX_TOP_K = 8
 
 _state: dict[str, Any] = {}
 
@@ -83,14 +84,10 @@ app.add_middleware(
 
 
 class PriorSource(BaseModel):
-    """A passage retrieved on an earlier turn, replayed by the client.
-
-    Length caps are security controls: these fields are inserted verbatim into a system
-    prompt, so an unbounded prior_sources.text would be an injection vector.
-    """
+    """A passage retrieved on an earlier turn, replayed by the client."""
 
     citation: str = Field(..., max_length=300)
-    text: str = Field(..., max_length=2000)
+    text: str | None = Field(default=None, max_length=2000)  # None = no text stored, will be skipped
     doc_id: str | None = Field(default=None, max_length=64)
     chapter: str | None = Field(default=None, max_length=200)
     section: str | None = Field(default=None, max_length=200)
@@ -175,6 +172,38 @@ def _scope(doc_ids: list[str] | None) -> set[str] | None:
     return valid or None
 
 
+import re
+
+_CITATION_HINT = re.compile(r"\([A-Za-z].{0,120}?\)")
+
+
+def _answer_has_citation(answer: str, hits: list) -> bool:
+    """Heuristic: did the answer actually cite anything from the retrieved passages?
+
+    Retrieval always runs regardless of question type (greetings, small talk, and
+    off-topic questions all still trigger a search), so hits alone never indicate whether
+    the model used them. The <<<DECLINED>>> sentinel catches explicit off-topic declines,
+    but a greeting is answered directly without using context and without declining -
+    this catches that remaining case by checking whether the answer text plausibly
+    contains a citation for any retrieved document.
+    """
+    if not hits or not answer:
+        return False
+    # Cheap first check: any parenthesised text at all in the answer.
+    if not _CITATION_HINT.search(answer):
+        return False
+    # Confirm at least one hit's title or locator actually appears in the answer text,
+    # so a parenthetical aside in a greeting doesn't get mistaken for a real citation.
+    lowered = answer.lower()
+    for h in hits:
+        title = DOC_TITLES.get(h.doc_id, h.doc_id).lower()
+        if title in lowered:
+            return True
+        if h.locator and h.locator.lower() in lowered:
+            return True
+    return False
+
+
 def _serialise(hit) -> dict:
     return {
         "citation": hit.citation,
@@ -193,7 +222,7 @@ def _prior_hits(payload: ChatRequest) -> list[Hit]:
     return [
         Hit(
             score=0.0,
-            text=p.text,
+            text=p.text or "",   # empty string is safe; the context renderer skips empty blocks
             citation=p.citation,
             doc_id=p.doc_id or "unknown",
             chapter=p.chapter,
@@ -201,6 +230,7 @@ def _prior_hits(payload: ChatRequest) -> list[Hit]:
             locator=p.locator,
         )
         for p in (payload.prior_sources or [])
+        if p.text  # skip passages with no text — they have no retrieval value
     ]
 
 
@@ -264,20 +294,35 @@ async def list_models():
 @app.post("/chat")
 async def chat(payload: ChatRequest):
     retriever = get_retriever()
-    # Provider override is only used in dev; in prod LLM_PROVIDER env var applies.
     provider = payload.provider if os.getenv("ALLOW_PROVIDER_OVERRIDE") else None
     try:
         sanitized_history = _sanitize_history(payload.history)
-        hits, query, rewritten = await asyncio.to_thread(_retrieve, retriever, payload, sanitized_history)
-        answer, followups = await asyncio.to_thread(
+        intent = classify_query(payload.question)
+
+        if intent == QueryIntent.NEEDS_RAG:
+            hits, query, rewritten = await asyncio.to_thread(
+                _retrieve, retriever, payload, sanitized_history
+            )
+        else:
+            hits, query, rewritten = [], payload.question, False
+
+        answer, followups, declined = await asyncio.to_thread(
             generate, payload.question, hits, sanitized_history, _prior_hits(payload), provider
         )
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
+    # Don't show sources if: the model declined, or no retrieval was run, or the answer
+    # doesn't actually cite any of the retrieved passages.
+    show_sources = (
+        not declined
+        and intent == QueryIntent.NEEDS_RAG
+        and _answer_has_citation(answer, hits)
+    )
+
     return {
         "answer": answer,
-        "sources": [_serialise(h) for h in hits],
+        "sources": [_serialise(h) for h in hits] if show_sources else [],
         "followups": followups,
         "top_k": _clamp_k(payload.top_k),
         "retrieval_query": query if rewritten else None,
@@ -291,18 +336,27 @@ async def chat_stream(payload: ChatRequest):
     provider = payload.provider if os.getenv("ALLOW_PROVIDER_OVERRIDE") else None
     sanitized_history = _sanitize_history(payload.history)
     prior = _prior_hits(payload)
+    intent = classify_query(payload.question)
 
     async def event_stream():
         try:
-            hits, query, rewritten = await asyncio.to_thread(_retrieve, retriever, payload)
-            yield _sse(
-                "sources",
-                {
-                    "sources": [_serialise(h) for h in hits],
-                    "retrieval_query": query if rewritten else None,
+            if intent == QueryIntent.NEEDS_RAG:
+                hits, query, rewritten = await asyncio.to_thread(_retrieve, retriever, payload)
+                yield _sse(
+                    "sources",
+                    {
+                        "sources": [_serialise(h) for h in hits],
+                        "retrieval_query": query if rewritten else None,
+                        "provider": provider or default_provider(),
+                    },
+                )
+            else:
+                hits = []
+                yield _sse("sources", {
+                    "sources": [],
+                    "retrieval_query": None,
                     "provider": provider or default_provider(),
-                },
-            )
+                })
 
             queue: asyncio.Queue = asyncio.Queue()
             loop = asyncio.get_running_loop()
@@ -326,6 +380,11 @@ async def chat_stream(payload: ChatRequest):
                     yield _sse("delta", {"text": value})
                 elif kind == "followups":
                     yield _sse("followups", {"followups": value})
+                elif kind == "declined":
+                    # Sources were already sent in the earlier "sources" event, before
+                    # generation decided the request was off-topic. Tell the client to
+                    # retract them rather than showing citations for an unused retrieval.
+                    yield _sse("declined", {})
                 elif kind == "error":
                     yield _sse("error", {"detail": value})
                 else:

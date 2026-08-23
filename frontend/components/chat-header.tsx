@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Info, RotateCcw, X } from "lucide-react"
+import { Info, Bookmark, RotateCcw, X } from "lucide-react"
 
 import ScopeFilter from "./scope-filter"
 import type { SourceInfo } from "@/lib/types"
@@ -11,6 +11,7 @@ interface ChatHeaderProps {
   scope: string[]
   onScopeChange: (docIds: string[]) => void
   onReset: () => void
+  onOpenBookmarks: () => void
   hasMessages: boolean
 }
 
@@ -19,6 +20,7 @@ export default function ChatHeader({
   scope,
   onScopeChange,
   onReset,
+  onOpenBookmarks,
   hasMessages,
 }: ChatHeaderProps) {
   const [showDisclaimer, setShowDisclaimer] = useState(false)
@@ -41,14 +43,14 @@ export default function ChatHeader({
             <Seal condensed={condensed} />
             <div className="min-w-0">
               <h1
-                className={`truncate font-display font-semibold tracking-tight text-foreground transition-all duration-500 ${
-                  condensed ? "text-lg" : "text-2xl sm:text-3xl"
+                className={`font-display font-semibold tracking-tight text-foreground transition-all duration-500 ${
+                  condensed ? "text-base sm:text-lg" : "text-lg sm:text-2xl"
                 }`}
               >
                 Sistani Jurisprudence
               </h1>
               {!condensed && (
-                <p className="mt-0.5 font-serif text-sm text-muted-foreground animate-fade-in">
+                <p className="mt-0.5 hidden sm:block font-serif text-sm text-muted-foreground animate-fade-in">
                   Answers grounded in cited rulings, not paraphrase
                 </p>
               )}
@@ -60,9 +62,20 @@ export default function ChatHeader({
 
             <button
               type="button"
+              onClick={onOpenBookmarks}
+              aria-label="Saved rulings"
+              title="Saved rulings"
+              className="grid min-h-[44px] min-w-[44px] place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            >
+              <Bookmark className="h-4 w-4" />
+            </button>
+
+            <button
+              type="button"
               onClick={() => setShowDisclaimer((v) => !v)}
               aria-label="About this assistant"
               aria-expanded={showDisclaimer}
+              title="About"
               className="grid min-h-[44px] min-w-[44px] place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
               <Info className="h-4 w-4" />
@@ -73,6 +86,7 @@ export default function ChatHeader({
                 type="button"
                 onClick={onReset}
                 aria-label="Start a new conversation"
+                title="New chat"
                 className="grid min-h-[44px] min-w-[44px] place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
               >
                 <RotateCcw className="h-4 w-4" />
@@ -113,7 +127,7 @@ function Seal({ condensed }: { condensed: boolean }) {
   return (
     <span
       className={`relative grid shrink-0 place-items-center transition-all duration-500 ${
-        condensed ? "h-8 w-8" : "h-11 w-11"
+        condensed ? "h-7 w-7 sm:h-8 sm:w-8" : "h-9 w-9 sm:h-11 sm:w-11"
       }`}
     >
       <span className="absolute inset-0 rounded-lg bg-primary/10" />

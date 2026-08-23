@@ -1,0 +1,14 @@
+# Production dependencies only — excludes build-time tools (fastembed, PyMuPDF, tiktoken)
+# that are only needed for index construction, not for serving requests.
+# Use this on Render to keep the slug under 512MB.
+
+faiss-cpu
+groq
+numpy
+tqdm
+python-dotenv
+requests
+fastapi
+uvicorn
+pydantic
+google-genai>=1.73.1

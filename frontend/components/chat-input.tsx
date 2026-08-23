@@ -64,7 +64,7 @@ export default function ChatInput({ onSendMessage, onStop, disabled, seed }: Cha
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask about rulings, worship, or a specific verse…"
+            placeholder="Ask about namaz, roza, hajj, or any ruling… (Gujarati/Hindi mein bhi puch sakte ho)"
             aria-label="Your question"
             className="max-h-[168px] flex-1 resize-none bg-transparent py-1.5 font-serif text-base leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/70 scrollbar-thin"
           />

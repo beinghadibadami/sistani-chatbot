@@ -1,13 +1,15 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import EmptyState from "./empty-state"
 import FeedbackButtons from "./feedback-buttons"
 import FollowupChips from "./followup-chips"
+import MessageActions from "./message-actions"
 import MessageBubble from "./message-bubble"
 import SourceCards from "./source-cards"
 import ThinkingIndicator from "./thinking-indicator"
+import { isBookmarked, removeBookmark, saveBookmark } from "@/lib/bookmarks"
 import type { Message, Rating } from "@/lib/types"
 
 interface ChatMessagesProps {
@@ -27,9 +29,19 @@ export default function ChatMessages({
   const containerRef = useRef<HTMLDivElement>(null)
   const pinnedRef = useRef(true)
   const last = messages[messages.length - 1]
+  // Track bookmarked message IDs to reactively update the UI
+  const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set())
 
-  // Only auto-scroll while the user is already near the bottom, so scrolling up to read an
-  // earlier answer is not fought by incoming tokens.
+  // Load bookmark state on mount
+  useEffect(() => {
+    const ids = new Set(
+      messages
+        .filter((m) => m.role === "assistant" && isBookmarked(m.id))
+        .map((m) => m.id)
+    )
+    setBookmarkedIds(ids)
+  }, [messages.length])
+
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
@@ -46,6 +58,25 @@ export default function ChatMessages({
     endRef.current?.scrollIntoView({ behavior: last?.streaming ? "auto" : "smooth" })
   }, [messages.length, last?.content, last?.streaming, loading])
 
+  const handleBookmark = (msg: Message) => {
+    const alreadyBookmarked = bookmarkedIds.has(msg.id)
+    if (alreadyBookmarked) {
+      removeBookmark(msg.id)
+      setBookmarkedIds((prev) => { const next = new Set(prev); next.delete(msg.id); return next })
+    } else {
+      // Find the user question that preceded this answer
+      const idx = messages.findIndex((m) => m.id === msg.id)
+      const question = [...messages.slice(0, idx)].reverse().find((m) => m.role === "user")
+      saveBookmark({
+        id: msg.id,
+        question: question?.content ?? "",
+        answer: msg.content,
+        citations: (msg.sources ?? []).map((s) => s.citation),
+      })
+      setBookmarkedIds((prev) => new Set(prev).add(msg.id))
+    }
+  }
+
   const isEmpty = messages.length === 0
 
   return (
@@ -55,7 +86,7 @@ export default function ChatMessages({
           <EmptyState onPick={onPickQuestion} />
         ) : (
           <div className="space-y-7">
-            {messages.map((message) => (
+            {messages.map((message, idx) => (
               <div key={message.id} className="animate-rise">
                 <MessageBubble
                   role={message.role}
@@ -67,27 +98,41 @@ export default function ChatMessages({
                 {message.role === "assistant" && !message.streaming && !message.error && (
                   <>
                     {message.sources && message.sources.length > 0 && (
-                      <SourceCards sources={message.sources} />
+                      <div className="ml-[46px] sm:ml-[46px]">
+                        <SourceCards sources={message.sources} />
+                      </div>
                     )}
 
-                    <FeedbackButtons
-                      rating={message.rating}
-                      onSubmit={(rating, comment) => onRate(message.id, rating, comment)}
-                    />
-
-                    {message.followups && message.followups.length > 0 && (
-                      <FollowupChips
-                        followups={message.followups}
-                        onPick={onPickQuestion}
-                        disabled={loading}
+                    <div className="ml-[46px] sm:ml-[46px]">
+                      <MessageActions
+                        content={message.content}
+                        question={
+                          [...messages.slice(0, idx)].reverse().find((m) => m.role === "user")?.content
+                        }
+                        citations={(message.sources ?? []).map((s) => s.citation)}
+                        messageId={message.id}
+                        isBookmarked={bookmarkedIds.has(message.id)}
+                        onBookmark={() => handleBookmark(message)}
                       />
-                    )}
+
+                      <FeedbackButtons
+                        rating={message.rating}
+                        onSubmit={(rating, comment) => onRate(message.id, rating, comment)}
+                      />
+
+                      {message.followups && message.followups.length > 0 && (
+                        <FollowupChips
+                          followups={message.followups}
+                          onPick={onPickQuestion}
+                          disabled={loading}
+                        />
+                      )}
+                    </div>
                   </>
                 )}
               </div>
             ))}
 
-            {/* Shown only until the first token lands; after that the caret conveys progress. */}
             {loading && !last?.streaming && <ThinkingIndicator />}
           </div>
         )}

@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
-import { Check, Copy } from "lucide-react"
+
+import ScholarAvatar from "./scholar-avatar"
 
 interface MessageBubbleProps {
   role: "user" | "assistant"
@@ -29,10 +29,14 @@ export default function MessageBubble({ role, content, streaming, error }: Messa
   }
 
   return (
-    <div className="group relative">
-      {/* Assistant answers are unbubbled: a gold margin rule reads as a manuscript gloss
-          rather than a chat balloon, and gives long answers a full measure to breathe. */}
-      <div className="relative border-l-2 border-gold/40 pl-4 sm:pl-5">
+    <div className="group relative flex gap-3">
+      {/* Scholar turban avatar */}
+      <div className="mt-1 shrink-0">
+        <ScholarAvatar />
+      </div>
+
+      {/* Answer content with gold left border */}
+      <div className="min-w-0 flex-1 border-l-2 border-gold/40 pl-4 sm:pl-5">
         <div
           dir="auto"
           className={`prose-answer ${error ? "text-destructive" : "text-foreground"}`}
@@ -40,15 +44,11 @@ export default function MessageBubble({ role, content, streaming, error }: Messa
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={{
-              // Wrap tables in a scrollable container so wide tables don't force
-              // horizontal page scroll on narrow screens. Without this, a 5-column
-              // fiqh table (e.g. blood-money amounts) would overflow the 375px viewport.
               table: ({ node, ...props }) => (
                 <div className="overflow-x-auto -mx-1 px-1 my-2">
                   <table {...props} />
                 </div>
               ),
-              // Open any model-provided link safely.
               a: ({ node, ...props }) => (
                 <a {...props} target="_blank" rel="noopener noreferrer" />
               ),
@@ -64,46 +64,7 @@ export default function MessageBubble({ role, content, streaming, error }: Messa
             />
           )}
         </div>
-
-        {!streaming && !error && content.trim().length > 0 && (
-          <CopyButton text={content} />
-        )}
       </div>
     </div>
-  )
-}
-
-function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false)
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1800)
-    } catch {
-      /* clipboard unavailable (insecure context or denied permission) */
-    }
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={copy}
-      aria-label={copied ? "Copied" : "Copy answer"}
-      className="mt-2 inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[0.72rem] font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:opacity-0 sm:group-hover:opacity-100"
-    >
-      {copied ? (
-        <>
-          <Check className="h-3 w-3 text-primary" />
-          Copied
-        </>
-      ) : (
-        <>
-          <Copy className="h-3 w-3" />
-          Copy
-        </>
-      )}
-    </button>
   )
 }

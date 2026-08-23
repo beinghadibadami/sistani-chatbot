@@ -53,6 +53,7 @@ export default function ScopeFilter({ sources, scope, onChange }: ScopeFilterPro
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-label="Filter sources"
+        title="Search within"
         className={`grid min-h-[44px] min-w-[44px] place-items-center gap-1.5 rounded-lg text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
           active
             ? "bg-primary/12 text-primary"

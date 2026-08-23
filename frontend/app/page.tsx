@@ -7,6 +7,7 @@ import ChatInput from "@/components/chat-input"
 import ChatMessages from "@/components/chat-messages"
 import DevModelSwitcher from "@/components/dev-model-switcher"
 import GeometricBackdrop from "@/components/geometric-backdrop"
+import SavedRulings from "@/components/saved-rulings"
 import { fetchModels, fetchSources, sendFeedback, streamChat } from "@/lib/api"
 import {
   clearChat,
@@ -27,10 +28,12 @@ export default function Home() {
   const [scope, setScope] = useState<string[]>([])
   const [seed, setSeed] = useState<string | undefined>()
   const [hydrated, setHydrated] = useState(false)
-  // Dev model switcher state — only meaningful when NEXT_PUBLIC_DEV_MODE=true
+  // Dev model switcher state
   const [providers, setProviders] = useState<ProviderInfo[]>([])
   const [selectedProvider, setSelectedProvider] = useState<string>("groq")
   const [lastTtft, setLastTtft] = useState<number | null>(null)
+  // Bookmarks panel
+  const [bookmarksOpen, setBookmarksOpen] = useState(false)
 
   const abortRef = useRef<AbortController | null>(null)
   const sessionIdRef = useRef<string>("")
@@ -126,6 +129,26 @@ export default function Home() {
         {
           onSources: (incoming) => {
             collected = incoming
+            // Create the assistant bubble as soon as sources arrive so the user sees
+            // something immediately (~0ms after the first SSE event) rather than waiting
+            // up to ~4s for the first text token. At TTFT the bubble shows sources only;
+            // text fills in as it streams. The thinking indicator disappears at this point.
+            if (!started) {
+              started = true
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: assistantId,
+                  role: "assistant" as const,
+                  content: "",
+                  sources: incoming,
+                  timestamp: Date.now(),
+                  streaming: true,
+                },
+              ])
+            } else {
+              patch(assistantId, { sources: incoming })
+            }
           },
           onDelta: (piece) => {
             answer += piece
@@ -134,14 +157,13 @@ export default function Home() {
               ttftRecorded = true
             }
             if (!started) {
-              // Create the assistant message only once text actually arrives, so the
-              // thinking indicator stays visible until then.
+              // Fallback: sources event was missed, create bubble on first text
               started = true
               setMessages((prev) => [
                 ...prev,
                 {
                   id: assistantId,
-                  role: "assistant",
+                  role: "assistant" as const,
                   content: answer,
                   sources: collected,
                   timestamp: Date.now(),
@@ -154,6 +176,12 @@ export default function Home() {
           },
           onFollowups: (followups) => {
             patch(assistantId, { followups })
+          },
+          onDeclined: () => {
+            // Sources were shown before the model decided the request was off-topic;
+            // retract them since the answer never actually drew on them.
+            collected = []
+            patch(assistantId, { sources: [] })
           },
           onError: (detail) => {
             throw new Error(detail)
@@ -227,6 +255,7 @@ export default function Home() {
           scope={scope}
           onScopeChange={handleScopeChange}
           onReset={handleReset}
+          onOpenBookmarks={() => setBookmarksOpen(true)}
           hasMessages={messages.length > 0}
         />
 
@@ -260,6 +289,13 @@ export default function Home() {
 
         <ChatInput onSendMessage={send} onStop={handleStop} disabled={loading} seed={seed} />
       </div>
+
+      {/* Saved rulings slide-out panel */}
+      <SavedRulings
+        open={bookmarksOpen}
+        onClose={() => setBookmarksOpen(false)}
+        onAsk={(q) => send(q)}
+      />
     </div>
   )
 }
