@@ -43,20 +43,20 @@ export default function MessageActions({
   const shareWhatsApp = () => {
     const parts: string[] = []
     if (question) parts.push(`*Q: ${question}*`)
-    // Trim long answers for WhatsApp (max ~2000 chars to be safe in URL)
-    const trimmed = content.length > 1600 ? content.slice(0, 1600) + "…" : content
+    const trimmed = content.length > 1400 ? content.slice(0, 1400) + "…" : content
     parts.push(trimmed)
     if (citations?.length) {
       parts.push(`\n📚 ${citations.slice(0, 3).join(" | ")}`)
     }
-    parts.push("\n_— Sistani Jurisprudence Assistant_")
+    parts.push("\n🔗 al-sistani-chat.onrender.com")
+    parts.push("_— Sistani Jurisprudence Assistant_")
 
     const text = encodeURIComponent(parts.join("\n\n"))
     window.open(`https://wa.me/?text=${text}`, "_blank", "noopener")
   }
 
   return (
-    <div className="mt-2 flex items-center gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100 transition-opacity">
+    <div className="mt-2 flex items-center gap-0.5">
       {/* Copy */}
       <button
         type="button"
@@ -95,13 +95,13 @@ export default function MessageActions({
         aria-label={isBookmarked ? "Remove bookmark" : "Save this ruling"}
         className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-md px-2.5 py-2 text-[0.75rem] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
           isBookmarked
-            ? "text-gold hover:bg-muted"
+            ? "text-gold hover:bg-muted active:bg-muted"
             : "text-muted-foreground hover:bg-muted hover:text-foreground active:bg-muted"
         }`}
       >
         {isBookmarked ? (
           <>
-            <BookmarkCheck className="h-4 w-4 fill-current" />
+            <Bookmark className="h-4 w-4 fill-current" />
             <span className="hidden sm:inline">Saved</span>
           </>
         ) : (

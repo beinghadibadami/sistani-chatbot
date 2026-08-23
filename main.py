@@ -34,7 +34,7 @@ from rag.classify import QueryIntent, classify_query
 from rag.generate import GROQ_MODEL, generate, stream_generate
 from rag.providers import AVAILABLE_PROVIDERS, default_provider
 from rag.retrieve import Hit, Retriever
-from rag.rewrite import rewrite_query
+from rag.rewrite import rewrite_query, translate_query_to_english
 
 DEFAULT_TOP_K = 5
 MAX_TOP_K = 8
@@ -241,6 +241,8 @@ def _retrieve(retriever: Retriever, payload: ChatRequest, sanitized_history=None
     client-supplied history content.
     """
     query, rewritten = rewrite_query(payload.question, sanitized_history or [])
+    # Translate non-English queries to English for better keyword matching in BM25
+    query = translate_query_to_english(query)
     hits = retriever.search(
         query,
         _clamp_k(payload.top_k),

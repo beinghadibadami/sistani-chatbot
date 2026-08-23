@@ -1,0 +1,17 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "Sistani Jurisprudence Assistant",
+  "name_for_model": "sistani_jurisprudence",
+  "description_for_human": "Get authentic Islamic rulings from Grand Ayatollah Sistani's official sources on prayer, fasting, hajj, marriage, purity, and daily Islamic practices.",
+  "description_for_model": "Retrieval-augmented chatbot trained on Ayatollah Sistani's jurisprudence corpus (Q&A, Islamic Laws, Jurisprudence Made Easy, Hajj rituals). Answers questions about Shia Islamic law (fiqh) with citations to official sources. Supports English, Hindi, Gujarati, and Urdu queries.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://al-sistani-chat.onrender.com/openapi.json"
+  },
+  "logo_url": "https://al-sistani-chat.onrender.com/icon.png",
+  "contact_email": "support@al-sistani-chat.onrender.com",
+  "legal_info_url": "https://al-sistani-chat.onrender.com"
+}

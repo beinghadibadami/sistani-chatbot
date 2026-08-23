@@ -63,7 +63,7 @@ export default function ChatHeader({
             <button
               type="button"
               onClick={onOpenBookmarks}
-              aria-label="Saved rulings"
+              aria-label="View saved rulings"
               title="Saved rulings"
               className="grid min-h-[44px] min-w-[44px] place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >

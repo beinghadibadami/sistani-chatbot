@@ -24,7 +24,7 @@ const DOC_META: Record<string, { label: string; Icon: typeof BookOpen }> = {
 interface SourceCardsProps {
   sources: Source[]
   /** Max sources to display. Backend retrieves more for LLM context quality,
-   * but showing all of them overwhelms the user. Default: 2 (highest-scored). */
+   * but showing all of them can overwhelm. Default: 2 (highest-scored). */
   maxDisplay?: number
 }
 

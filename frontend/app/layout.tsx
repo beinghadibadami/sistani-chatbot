@@ -36,9 +36,56 @@ const amiri = Amiri({
 })
 
 export const metadata: Metadata = {
-  title: "Sistani Jurisprudence Assistant",
+  metadataBase: new URL('https://al-sistani-chat.onrender.com'),
+  title: "Sistani Jurisprudence Assistant | Islamic Rulings from Ayatollah Sistani",
   description:
-    "Ask questions on Islamic jurisprudence, answered from the rulings of Ayatullah al-Sistani with exact citations.",
+    "Get authentic Islamic rulings from Grand Ayatollah Sistani's official sources. Ask questions about prayer, fasting, hajj, marriage, purity, and daily Islamic practices in English, Hindi, Gujarati, or Urdu.",
+  keywords: [
+    "Ayatollah Sistani",
+    "Islamic rulings",
+    "Shia fiqh",
+    "Islamic jurisprudence",
+    "salat prayer",
+    "hajj pilgrimage",
+    "wudu ablution",
+    "Islamic laws",
+    "Sistani fatwa",
+    "namaz",
+    "roza fasting",
+    "halal haram",
+    "tahara purity",
+    "nikah marriage",
+    "zakat",
+  ],
+  authors: [{ name: "Al-Sistani Chat" }],
+  creator: "Al-Sistani Chat",
+  publisher: "Al-Sistani Chat",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://al-sistani-chat.onrender.com',
+    title: 'Sistani Jurisprudence Assistant | Islamic Rulings',
+    description: 'Get authentic Islamic rulings from Grand Ayatollah Sistani. Free AI-powered assistant for Shia fiqh questions.',
+    siteName: 'Sistani Jurisprudence Assistant',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Sistani Jurisprudence Assistant',
+    description: 'Ask Islamic law questions, get answers from Ayatollah Sistani\'s sources',
+  },
+  alternates: {
+    canonical: 'https://al-sistani-chat.onrender.com',
+  },
   icons: {
     icon: [{ url: "/icon.jpg" }],
   },
@@ -55,6 +102,32 @@ export default function RootLayout({
       className={`${inter.variable} ${spectral.variable} ${cormorant.variable} ${amiri.variable}`}
       suppressHydrationWarning
     >
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebApplication",
+              "name": "Sistani Jurisprudence Assistant",
+              "description": "AI-powered Islamic jurisprudence assistant based on Grand Ayatollah Sistani's rulings",
+              "url": "https://al-sistani-chat.onrender.com",
+              "applicationCategory": "EducationalApplication",
+              "operatingSystem": "All",
+              "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD"
+              },
+              "author": {
+                "@type": "Organization",
+                "name": "Al-Sistani Chat"
+              },
+              "inLanguage": ["en", "hi", "gu", "ur"]
+            })
+          }}
+        />
+      </head>
       <body className="font-sans antialiased">
         {children}
         <Analytics />

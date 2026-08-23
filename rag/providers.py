@@ -44,18 +44,25 @@ AVAILABLE_PROVIDERS = {
 # Groq provider
 # ---------------------------------------------------------------------------
 
+GROQ_MODELS = [
+    os.getenv("GROQ_MODEL", "openai/gpt-oss-120b"),
+    "qwen/qwen3.6-27b",
+    "openai/gpt-oss-20b",
+]
+
+
 def _groq_kwargs(messages: list[dict], stream: bool, max_tokens: int,
-                 temperature: float, reasoning_effort: str) -> dict:
-    model = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
+                 temperature: float, reasoning_effort: str, model: str | None = None) -> dict:
+    m = model or GROQ_MODELS[0]
     kw = {
-        "model": model,
+        "model": m,
         "messages": messages,
         "temperature": temperature,
         "max_completion_tokens": max_tokens,
         "top_p": 1,
         "stream": stream,
     }
-    if "gpt-oss" in model and reasoning_effort:
+    if "gpt-oss" in m and reasoning_effort:
         kw["reasoning_effort"] = reasoning_effort
     return kw
 
@@ -63,11 +70,13 @@ def _groq_kwargs(messages: list[dict], stream: bool, max_tokens: int,
 def groq_generate(messages: list[dict], *, max_tokens: int, temperature: float,
                   reasoning_effort: str) -> str:
     from rag.groq_client import get_client, mark_rate_limited
-    kw = _groq_kwargs(messages, stream=False, max_tokens=max_tokens,
-                      temperature=temperature, reasoning_effort=reasoning_effort)
-
-    # Try up to 3 keys on rate limit before giving up.
-    for attempt in range(3):
+    
+    # Try each model on each key rotation — 3 keys × 3 models = 9 attempts max
+    for attempt in range(len(GROQ_MODELS) * 3):
+        model = GROQ_MODELS[attempt % len(GROQ_MODELS)]
+        kw = _groq_kwargs(messages, stream=False, max_tokens=max_tokens,
+                          temperature=temperature, reasoning_effort=reasoning_effort,
+                          model=model)
         try:
             c = get_client().chat.completions.create(**kw)
             return c.choices[0].message.content or ""
@@ -76,50 +85,85 @@ def groq_generate(messages: list[dict], *, max_tokens: int, temperature: float,
                 mark_rate_limited()
                 continue
             raise
-    raise RuntimeError("All Groq API keys are rate-limited. Please try again shortly.")
+    raise RuntimeError("All Groq API keys and models are rate-limited. Please try again shortly.")
 
 
 def groq_stream(messages: list[dict], *, max_tokens: int, temperature: float,
                 reasoning_effort: str) -> Iterator[str]:
     from rag.groq_client import get_client, mark_rate_limited
-    kw = _groq_kwargs(messages, stream=True, max_tokens=max_tokens,
-                      temperature=temperature, reasoning_effort=reasoning_effort)
 
-    for attempt in range(3):
+    for attempt in range(len(GROQ_MODELS) * 3):
+        model = GROQ_MODELS[attempt % len(GROQ_MODELS)]
+        kw = _groq_kwargs(messages, stream=True, max_tokens=max_tokens,
+                          temperature=temperature, reasoning_effort=reasoning_effort,
+                          model=model)
         try:
             for chunk in get_client().chat.completions.create(**kw):
                 if chunk.choices and chunk.choices[0].delta.content:
                     yield chunk.choices[0].delta.content
-            return  # stream completed successfully
+            return
         except Exception as exc:
             if _is_rate_limit(exc):
                 mark_rate_limited()
                 continue
             raise
-    raise RuntimeError("All Groq API keys are rate-limited. Please try again shortly.")
+    raise RuntimeError("All Groq API keys and models are rate-limited. Please try again shortly.")
 
 
 def _is_rate_limit(exc: Exception) -> bool:
-    """Check if an exception is a rate-limit (429) or auth (401) error from Groq."""
+    """Check if an exception is a rate-limit (429/503) or auth (401) error."""
     exc_str = str(exc).lower()
-    if "429" in exc_str or "rate" in exc_str:
+    # Groq rate limit
+    if "429" in exc_str or "rate" in exc_str or "rate_limit" in exc_str:
         return True
-    # Also rotate on 401 (invalid key) so a revoked key doesn't block the whole service.
-    if "401" in exc_str or "authentication" in exc_str:
+    # Gemini rate limit (503 or quota exceeded)
+    if "503" in exc_str or "quota" in exc_str or "resource_exhausted" in exc_str:
+        return True
+    # Invalid/revoked key
+    if "401" in exc_str or "authentication" in exc_str or "api_key" in exc_str:
         return True
     return False
 
 
 # ---------------------------------------------------------------------------
-# Gemini provider
+# Gemini provider (with key rotation similar to Groq)
 # ---------------------------------------------------------------------------
 
-def _gemini_client():
-    from google import genai
-    key = os.getenv("GEMINI_API_KEY")
-    if not key:
+_gemini_key_index = 0
+_gemini_keys: list[str] = []
+
+
+def _load_gemini_keys():
+    """Load all Gemini API keys from GEMINI_API_KEY env (comma/space separated)."""
+    global _gemini_keys
+    if _gemini_keys:
+        return _gemini_keys
+    
+    raw = os.getenv("GEMINI_API_KEY", "")
+    if not raw:
         raise RuntimeError("GEMINI_API_KEY is not set.")
+    
+    _gemini_keys = [k.strip() for k in raw.replace(",", " ").split() if k.strip()]
+    if not _gemini_keys:
+        raise RuntimeError("GEMINI_API_KEY is empty.")
+    
+    return _gemini_keys
+
+
+def _gemini_client():
+    """Get Gemini client with the current key from rotation."""
+    from google import genai
+    keys = _load_gemini_keys()
+    key = keys[_gemini_key_index % len(keys)]
     return genai.Client(api_key=key)
+
+
+def _rotate_gemini_key():
+    """Move to the next Gemini API key in rotation."""
+    global _gemini_key_index
+    keys = _load_gemini_keys()
+    _gemini_key_index = (_gemini_key_index + 1) % len(keys)
+    print(f"[providers] Rotated to Gemini key {_gemini_key_index + 1}/{len(keys)}")
 
 
 def _to_gemini_contents(messages: list[dict]) -> tuple[str | None, list[Any]]:
@@ -161,7 +205,7 @@ def _gemini_model() -> str:
 def gemini_generate(messages: list[dict], *, max_tokens: int, temperature: float,
                     **_: Any) -> str:
     from google.genai import types
-    client = _gemini_client()
+    keys = _load_gemini_keys()
     model = _gemini_model()
     system_instruction, contents = _to_gemini_contents(messages)
 
@@ -170,14 +214,24 @@ def gemini_generate(messages: list[dict], *, max_tokens: int, temperature: float
         max_output_tokens=max_tokens,
         system_instruction=system_instruction,
     )
-    resp = client.models.generate_content(model=model, contents=contents, config=cfg)
-    return resp.text or ""
+    
+    # Try each Gemini key (rotate on rate limit)
+    for attempt in range(len(keys)):
+        client = _gemini_client()
+        try:
+            resp = client.models.generate_content(model=model, contents=contents, config=cfg)
+            return resp.text or ""
+        except Exception as e:
+            if _is_rate_limit(e) and attempt < len(keys) - 1:
+                _rotate_gemini_key()
+                continue
+            raise  # Last key or non-rate-limit error
 
 
 def gemini_stream(messages: list[dict], *, max_tokens: int, temperature: float,
                   **_: Any) -> Iterator[str]:
     from google.genai import types
-    client = _gemini_client()
+    keys = _load_gemini_keys()
     model = _gemini_model()
     system_instruction, contents = _to_gemini_contents(messages)
 
@@ -186,11 +240,22 @@ def gemini_stream(messages: list[dict], *, max_tokens: int, temperature: float,
         max_output_tokens=max_tokens,
         system_instruction=system_instruction,
     )
-    for chunk in client.models.generate_content_stream(
-        model=model, contents=contents, config=cfg
-    ):
-        if chunk.text:
-            yield chunk.text
+    
+    # Try each Gemini key (rotate on rate limit)
+    for attempt in range(len(keys)):
+        client = _gemini_client()
+        try:
+            for chunk in client.models.generate_content_stream(
+                model=model, contents=contents, config=cfg
+            ):
+                if chunk.text:
+                    yield chunk.text
+            return  # Success, exit
+        except Exception as e:
+            if _is_rate_limit(e) and attempt < len(keys) - 1:
+                _rotate_gemini_key()
+                continue
+            raise  # Last key or non-rate-limit error
 
 
 # ---------------------------------------------------------------------------
@@ -199,19 +264,76 @@ def gemini_stream(messages: list[dict], *, max_tokens: int, temperature: float,
 
 def call_generate(messages: list[dict], provider: str | None, *,
                   max_tokens: int, temperature: float, reasoning_effort: str) -> str:
-    p = (provider or default_provider()).lower()
-    if p == "gemini":
-        return gemini_generate(messages, max_tokens=max_tokens,
-                               temperature=temperature)
-    return groq_generate(messages, max_tokens=max_tokens, temperature=temperature,
-                         reasoning_effort=reasoning_effort)
+    """Call LLM with automatic fallback: if one provider is rate-limited, try the other.
+    
+    Logic:
+    1. Try primary provider (from LLM_PROVIDER env or passed explicitly)
+    2. If rate-limited → try alternate provider
+    3. If alternate also rate-limited → raise the original error
+    
+    This handles quota exhaustion gracefully: if Gemini is exhausted, fall back to Groq's
+    3 keys × 3 models. If Groq is exhausted, fall back to Gemini (quota may have reset).
+    """
+    primary = (provider or default_provider()).lower()
+    alternate = "groq" if primary == "gemini" else "gemini"
+    
+    # Try primary provider
+    try:
+        if primary == "gemini":
+            return gemini_generate(messages, max_tokens=max_tokens, temperature=temperature)
+        else:
+            return groq_generate(messages, max_tokens=max_tokens, temperature=temperature,
+                               reasoning_effort=reasoning_effort)
+    except Exception as e:
+        if not _is_rate_limit(e):
+            raise  # Not a rate limit — propagate immediately
+        
+        # Primary provider rate-limited → try alternate
+        print(f"[providers] {primary.upper()} rate-limited, falling back to {alternate.upper()}")
+        try:
+            if alternate == "gemini":
+                return gemini_generate(messages, max_tokens=max_tokens, temperature=temperature)
+            else:
+                return groq_generate(messages, max_tokens=max_tokens, temperature=temperature,
+                                   reasoning_effort=reasoning_effort)
+        except Exception as e2:
+            if _is_rate_limit(e2):
+                # Both providers exhausted
+                raise RuntimeError(
+                    f"Both {primary.upper()} and {alternate.upper()} are rate-limited or unavailable. "
+                    "Please try again in a few minutes."
+                ) from e
+            raise  # Alternate failed for non-rate-limit reason
 
 
 def call_stream(messages: list[dict], provider: str | None, *,
                 max_tokens: int, temperature: float,
                 reasoning_effort: str) -> Iterator[str]:
-    p = (provider or default_provider()).lower()
-    if p == "gemini":
-        return gemini_stream(messages, max_tokens=max_tokens, temperature=temperature)
-    return groq_stream(messages, max_tokens=max_tokens, temperature=temperature,
-                       reasoning_effort=reasoning_effort)
+    """Stream LLM response with automatic fallback if primary provider is rate-limited."""
+    primary = (provider or default_provider()).lower()
+    alternate = "groq" if primary == "gemini" else "gemini"
+    
+    try:
+        if primary == "gemini":
+            return gemini_stream(messages, max_tokens=max_tokens, temperature=temperature)
+        else:
+            return groq_stream(messages, max_tokens=max_tokens, temperature=temperature,
+                             reasoning_effort=reasoning_effort)
+    except Exception as e:
+        if not _is_rate_limit(e):
+            raise
+        
+        print(f"[providers] {primary.upper()} rate-limited (streaming), falling back to {alternate.upper()}")
+        try:
+            if alternate == "gemini":
+                return gemini_stream(messages, max_tokens=max_tokens, temperature=temperature)
+            else:
+                return groq_stream(messages, max_tokens=max_tokens, temperature=temperature,
+                                 reasoning_effort=reasoning_effort)
+        except Exception as e2:
+            if _is_rate_limit(e2):
+                raise RuntimeError(
+                    f"Both {primary.upper()} and {alternate.upper()} are rate-limited. "
+                    "Please try again shortly."
+                ) from e
+            raise

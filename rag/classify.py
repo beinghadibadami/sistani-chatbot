@@ -29,12 +29,12 @@ from enum import Enum
 _MAX_GREETING_WORDS = 6
 
 _GREETING_OPENER = (
-    r"as[- ]?salaa?m(\s+(alaikum|alaykum))?(\s+wa\s+rahmatullah)?"
-    r"|wa[- ]?alaikum(\s+as[- ]?salaa?m)?"
-    r"|salaa?m|hello|hi|hey"
+    r"as[- ]?sala+m(\s+(alaikum|alaykum))?(\s+wa\s+rahmatullah)?"
+    r"|wa[- ]?alaikum(\s+as[- ]?sala+m)?"
+    r"|sala+m|hel+o+|hi+|he+y+"
     r"|good\s*(morning|evening|afternoon|night)"
     r"|thank\s*(you|s)(\s+(so\s+much|very\s+much))?|jazak\s*allah(\s+khair)?|shukr(an|iya)?"
-    r"|bye|goodbye|see\s+you(\s+later)?|ok\s*(thanks?|bye)?"
+    r"|bye+|go+dbye+|see\s+you(\s+later)?|o+k+\s*(thanks?|bye+)?"
 )
 _GREETING_TAIL = r"how\s+are\s+(you|u)\??"
 
