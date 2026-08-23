@@ -32,7 +32,7 @@ export default function MessageBubble({ role, content, streaming, error }: Messa
     <div className="group relative flex gap-3">
       {/* Scholar turban avatar */}
       <div className="mt-1 shrink-0">
-        <ScholarAvatar size={34} />
+        <ScholarAvatar />
       </div>
 
       {/* Answer content with gold left border */}

@@ -133,8 +133,8 @@ export default function EmptyState({ onPick }: EmptyStateProps) {
         </span>
       </p>
 
-      {/* Topic pills */}
-      <div className="mt-6 flex flex-wrap justify-center gap-2">
+      {/* Topic pills — 2 columns on mobile, flex wrap on desktop */}
+      <div className="mt-6 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-center">
         {TOPICS.map((topic) => (
           <button
             key={topic.id}
