@@ -98,12 +98,12 @@ export default function ChatMessages({
                 {message.role === "assistant" && !message.streaming && !message.error && (
                   <>
                     {message.sources && message.sources.length > 0 && (
-                      <div className="ml-[46px]">
+                      <div className="ml-[46px] sm:ml-[46px]">
                         <SourceCards sources={message.sources} />
                       </div>
                     )}
 
-                    <div className="ml-[46px]">
+                    <div className="ml-[46px] sm:ml-[46px]">
                       <MessageActions
                         content={message.content}
                         question={

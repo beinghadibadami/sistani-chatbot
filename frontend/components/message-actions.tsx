@@ -62,16 +62,16 @@ export default function MessageActions({
         type="button"
         onClick={copyText}
         aria-label={copied ? "Copied" : "Copy answer"}
-        className="inline-flex min-h-[36px] items-center gap-1.5 rounded-md px-2 py-1.5 text-[0.72rem] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        className="inline-flex min-h-[44px] items-center gap-1.5 rounded-md px-2.5 py-2 text-[0.75rem] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       >
         {copied ? (
           <>
-            <Check className="h-3.5 w-3.5 text-primary" />
+            <Check className="h-4 w-4 text-primary" />
             <span className="hidden sm:inline">Copied</span>
           </>
         ) : (
           <>
-            <Copy className="h-3.5 w-3.5" />
+            <Copy className="h-4 w-4" />
             <span className="hidden sm:inline">Copy</span>
           </>
         )}
@@ -82,9 +82,9 @@ export default function MessageActions({
         type="button"
         onClick={shareWhatsApp}
         aria-label="Share on WhatsApp"
-        className="inline-flex min-h-[36px] items-center gap-1.5 rounded-md px-2 py-1.5 text-[0.72rem] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        className="inline-flex min-h-[44px] items-center gap-1.5 rounded-md px-2.5 py-2 text-[0.75rem] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       >
-        <Share2 className="h-3.5 w-3.5" />
+        <Share2 className="h-4 w-4" />
         <span className="hidden sm:inline">Share</span>
       </button>
 
@@ -93,7 +93,7 @@ export default function MessageActions({
         type="button"
         onClick={onBookmark}
         aria-label={isBookmarked ? "Remove bookmark" : "Save this ruling"}
-        className={`inline-flex min-h-[36px] items-center gap-1.5 rounded-md px-2 py-1.5 text-[0.72rem] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
+        className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-md px-2.5 py-2 text-[0.75rem] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
           isBookmarked
             ? "text-gold hover:bg-muted"
             : "text-muted-foreground hover:bg-muted hover:text-foreground active:bg-muted"
@@ -101,12 +101,12 @@ export default function MessageActions({
       >
         {isBookmarked ? (
           <>
-            <BookmarkCheck className="h-3.5 w-3.5 fill-current" />
+            <BookmarkCheck className="h-4 w-4 fill-current" />
             <span className="hidden sm:inline">Saved</span>
           </>
         ) : (
           <>
-            <Bookmark className="h-3.5 w-3.5" />
+            <Bookmark className="h-4 w-4" />
             <span className="hidden sm:inline">Save</span>
           </>
         )}

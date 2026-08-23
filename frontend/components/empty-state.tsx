@@ -140,7 +140,7 @@ export default function EmptyState({ onPick }: EmptyStateProps) {
             key={topic.id}
             type="button"
             onClick={() => setActiveTopic(activeTopic === topic.id ? null : topic.id)}
-            className={`inline-flex min-h-[36px] items-center gap-1.5 rounded-full border px-3 py-1.5 text-[0.8rem] font-medium transition-all ${
+            className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-full border px-3.5 py-2 text-[0.8rem] font-medium transition-all active:scale-95 ${
               activeTopic === topic.id
                 ? "border-primary/60 bg-primary/10 text-primary"
                 : "border-border/70 bg-card/50 text-muted-foreground hover:border-primary/40 hover:text-foreground"

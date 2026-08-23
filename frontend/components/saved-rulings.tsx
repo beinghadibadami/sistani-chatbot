@@ -96,9 +96,9 @@ export default function SavedRulings({ open, onClose, onAsk }: SavedRulingsProps
                       type="button"
                       onClick={() => handleRemove(ruling.id)}
                       aria-label="Remove bookmark"
-                      className="shrink-0 grid min-h-[36px] min-w-[36px] place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                      className="shrink-0 grid min-h-[44px] min-w-[44px] place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive active:bg-destructive/10"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                   <p className="mt-2 text-[0.62rem] text-muted-foreground/60">
