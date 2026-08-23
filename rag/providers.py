@@ -62,21 +62,52 @@ def _groq_kwargs(messages: list[dict], stream: bool, max_tokens: int,
 
 def groq_generate(messages: list[dict], *, max_tokens: int, temperature: float,
                   reasoning_effort: str) -> str:
-    from rag.groq_client import get_client
+    from rag.groq_client import get_client, mark_rate_limited
     kw = _groq_kwargs(messages, stream=False, max_tokens=max_tokens,
                       temperature=temperature, reasoning_effort=reasoning_effort)
-    c = get_client().chat.completions.create(**kw)
-    return c.choices[0].message.content or ""
+
+    # Try up to 3 keys on rate limit before giving up.
+    for attempt in range(3):
+        try:
+            c = get_client().chat.completions.create(**kw)
+            return c.choices[0].message.content or ""
+        except Exception as exc:
+            if _is_rate_limit(exc):
+                mark_rate_limited()
+                continue
+            raise
+    raise RuntimeError("All Groq API keys are rate-limited. Please try again shortly.")
 
 
 def groq_stream(messages: list[dict], *, max_tokens: int, temperature: float,
                 reasoning_effort: str) -> Iterator[str]:
-    from rag.groq_client import get_client
+    from rag.groq_client import get_client, mark_rate_limited
     kw = _groq_kwargs(messages, stream=True, max_tokens=max_tokens,
                       temperature=temperature, reasoning_effort=reasoning_effort)
-    for chunk in get_client().chat.completions.create(**kw):
-        if chunk.choices and chunk.choices[0].delta.content:
-            yield chunk.choices[0].delta.content
+
+    for attempt in range(3):
+        try:
+            for chunk in get_client().chat.completions.create(**kw):
+                if chunk.choices and chunk.choices[0].delta.content:
+                    yield chunk.choices[0].delta.content
+            return  # stream completed successfully
+        except Exception as exc:
+            if _is_rate_limit(exc):
+                mark_rate_limited()
+                continue
+            raise
+    raise RuntimeError("All Groq API keys are rate-limited. Please try again shortly.")
+
+
+def _is_rate_limit(exc: Exception) -> bool:
+    """Check if an exception is a rate-limit (429) or auth (401) error from Groq."""
+    exc_str = str(exc).lower()
+    if "429" in exc_str or "rate" in exc_str:
+        return True
+    # Also rotate on 401 (invalid key) so a revoked key doesn't block the whole service.
+    if "401" in exc_str or "authentication" in exc_str:
+        return True
+    return False
 
 
 # ---------------------------------------------------------------------------
