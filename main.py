@@ -28,7 +28,7 @@ from pydantic import BaseModel, Field
 
 load_dotenv()
 
-from ingest.base import DOC_TITLES
+from ingest.constants import DOC_TITLES
 from rag import feedback as feedback_store
 from rag.classify import QueryIntent, classify_query
 from rag.generate import GROQ_MODEL, generate, stream_generate

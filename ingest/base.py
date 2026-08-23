@@ -16,15 +16,7 @@ _ENC = tiktoken.get_encoding("cl100k_base")
 BGE_INPUT_LIMIT = 512
 HEADER_TOKEN_BUDGET = 32
 
-DOC_TITLES = {
-    "islamic_laws": "Islamic Laws (4th Edition)",
-    "summary_worship": "Summary of the Rules of Worship",
-    "hajj_rituals": "Hajj Rituals",
-    "jurisprudence_easy": "Jurisprudence Made Easy",
-    "women_rules": "Women's Religious Rules",
-    "quran": "Holy Quran",
-    "sistani_qna": "Sistani Q&A",
-}
+from ingest.constants import DOC_TITLES
 
 # Per-doc-type token caps. Legal/ruling text tolerates larger chunks because a single
 # ruling is self-contained; scripture and dialogue are denser per token so they stay smaller.
