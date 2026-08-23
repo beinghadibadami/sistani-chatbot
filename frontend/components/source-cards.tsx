@@ -23,9 +23,12 @@ const DOC_META: Record<string, { label: string; Icon: typeof BookOpen }> = {
 
 interface SourceCardsProps {
   sources: Source[]
+  /** Max sources to display. Backend retrieves more for LLM context quality,
+   * but showing all of them overwhelms the user. Default: 2 (highest-scored). */
+  maxDisplay?: number
 }
 
-export default function SourceCards({ sources }: SourceCardsProps) {
+export default function SourceCards({ sources, maxDisplay = 2 }: SourceCardsProps) {
   const [open, setOpen] = useState<string | null>(null)
 
   if (!sources?.length) return null
@@ -36,7 +39,7 @@ export default function SourceCards({ sources }: SourceCardsProps) {
     if (seen.has(s.citation)) return false
     seen.add(s.citation)
     return true
-  })
+  }).slice(0, maxDisplay)
 
   return (
     <div className="mt-3 space-y-1.5">

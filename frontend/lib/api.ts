@@ -16,6 +16,12 @@ export interface StreamHandlers {
   onSources?: (sources: Source[], retrievalQuery: string | null) => void
   onDelta?: (text: string) => void
   onFollowups?: (followups: string[]) => void
+  /**
+   * Fired when the model declined the request as off-topic. Retrieval always runs
+   * before generation decides this, so sources sent in the earlier "sources" event
+   * must be retracted — they were never actually used in the answer.
+   */
+  onDeclined?: () => void
   onError?: (detail: string) => void
 }
 
@@ -92,6 +98,8 @@ export async function streamChat(
 
       switch (event) {
         case "sources":
+          // All retrieved sources are passed through — the display component caps what
+          // the user sees, while the full set remains available for prior_sources replay.
           handlers.onSources?.(payload.sources ?? [], payload.retrieval_query ?? null)
           break
         case "delta":
@@ -99,6 +107,9 @@ export async function streamChat(
           break
         case "followups":
           handlers.onFollowups?.(payload.followups ?? [])
+          break
+        case "declined":
+          handlers.onDeclined?.()
           break
         case "error":
           handlers.onError?.(payload.detail ?? "Unknown error")
