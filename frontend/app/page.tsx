@@ -7,6 +7,7 @@ import ChatInput from "@/components/chat-input"
 import ChatMessages from "@/components/chat-messages"
 import DevModelSwitcher from "@/components/dev-model-switcher"
 import GeometricBackdrop from "@/components/geometric-backdrop"
+import SavedRulings from "@/components/saved-rulings"
 import { fetchModels, fetchSources, sendFeedback, streamChat } from "@/lib/api"
 import {
   clearChat,
@@ -27,10 +28,12 @@ export default function Home() {
   const [scope, setScope] = useState<string[]>([])
   const [seed, setSeed] = useState<string | undefined>()
   const [hydrated, setHydrated] = useState(false)
-  // Dev model switcher state — only meaningful when NEXT_PUBLIC_DEV_MODE=true
+  // Dev model switcher state
   const [providers, setProviders] = useState<ProviderInfo[]>([])
   const [selectedProvider, setSelectedProvider] = useState<string>("groq")
   const [lastTtft, setLastTtft] = useState<number | null>(null)
+  // Bookmarks panel
+  const [bookmarksOpen, setBookmarksOpen] = useState(false)
 
   const abortRef = useRef<AbortController | null>(null)
   const sessionIdRef = useRef<string>("")
@@ -252,6 +255,7 @@ export default function Home() {
           scope={scope}
           onScopeChange={handleScopeChange}
           onReset={handleReset}
+          onOpenBookmarks={() => setBookmarksOpen(true)}
           hasMessages={messages.length > 0}
         />
 
@@ -285,6 +289,13 @@ export default function Home() {
 
         <ChatInput onSendMessage={send} onStop={handleStop} disabled={loading} seed={seed} />
       </div>
+
+      {/* Saved rulings slide-out panel */}
+      <SavedRulings
+        open={bookmarksOpen}
+        onClose={() => setBookmarksOpen(false)}
+        onAsk={(q) => send(q)}
+      />
     </div>
   )
 }

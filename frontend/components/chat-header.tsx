@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Info, RotateCcw, X } from "lucide-react"
+import { Info, Bookmark, RotateCcw, X } from "lucide-react"
 
 import ScopeFilter from "./scope-filter"
 import type { SourceInfo } from "@/lib/types"
@@ -11,6 +11,7 @@ interface ChatHeaderProps {
   scope: string[]
   onScopeChange: (docIds: string[]) => void
   onReset: () => void
+  onOpenBookmarks: () => void
   hasMessages: boolean
 }
 
@@ -19,6 +20,7 @@ export default function ChatHeader({
   scope,
   onScopeChange,
   onReset,
+  onOpenBookmarks,
   hasMessages,
 }: ChatHeaderProps) {
   const [showDisclaimer, setShowDisclaimer] = useState(false)
@@ -57,6 +59,15 @@ export default function ChatHeader({
 
           <div className="flex shrink-0 items-center gap-1">
             <ScopeFilter sources={sources} scope={scope} onChange={onScopeChange} />
+
+            <button
+              type="button"
+              onClick={onOpenBookmarks}
+              aria-label="Saved rulings"
+              className="grid min-h-[44px] min-w-[44px] place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            >
+              <Bookmark className="h-4 w-4" />
+            </button>
 
             <button
               type="button"

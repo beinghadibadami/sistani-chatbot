@@ -1,0 +1,116 @@
+"use client"
+
+import { useState } from "react"
+import { Bookmark, BookmarkCheck, Check, Copy, Share2 } from "lucide-react"
+
+/**
+ * Action buttons below assistant messages: Copy, Share (WhatsApp), Bookmark.
+ * Visible always on mobile, hover-reveal on desktop.
+ */
+
+interface MessageActionsProps {
+  content: string
+  question?: string
+  citations?: string[]
+  messageId: string
+  isBookmarked: boolean
+  onBookmark: () => void
+}
+
+export default function MessageActions({
+  content,
+  question,
+  citations,
+  messageId,
+  isBookmarked,
+  onBookmark,
+}: MessageActionsProps) {
+  const [copied, setCopied] = useState(false)
+
+  const copyText = () => {
+    const parts: string[] = []
+    if (question) parts.push(`Q: ${question}`)
+    parts.push(content)
+    if (citations?.length) {
+      parts.push(`\nSources: ${citations.join(", ")}`)
+    }
+    navigator.clipboard.writeText(parts.join("\n\n")).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1800)
+    }).catch(() => {})
+  }
+
+  const shareWhatsApp = () => {
+    const parts: string[] = []
+    if (question) parts.push(`*Q: ${question}*`)
+    // Trim long answers for WhatsApp (max ~2000 chars to be safe in URL)
+    const trimmed = content.length > 1600 ? content.slice(0, 1600) + "…" : content
+    parts.push(trimmed)
+    if (citations?.length) {
+      parts.push(`\n📚 ${citations.slice(0, 3).join(" | ")}`)
+    }
+    parts.push("\n_— Sistani Jurisprudence Assistant_")
+
+    const text = encodeURIComponent(parts.join("\n\n"))
+    window.open(`https://wa.me/?text=${text}`, "_blank", "noopener")
+  }
+
+  return (
+    <div className="mt-2 flex items-center gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100 transition-opacity">
+      {/* Copy */}
+      <button
+        type="button"
+        onClick={copyText}
+        aria-label={copied ? "Copied" : "Copy answer"}
+        className="inline-flex min-h-[36px] items-center gap-1.5 rounded-md px-2 py-1.5 text-[0.72rem] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      >
+        {copied ? (
+          <>
+            <Check className="h-3.5 w-3.5 text-primary" />
+            <span className="hidden sm:inline">Copied</span>
+          </>
+        ) : (
+          <>
+            <Copy className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Copy</span>
+          </>
+        )}
+      </button>
+
+      {/* Share via WhatsApp */}
+      <button
+        type="button"
+        onClick={shareWhatsApp}
+        aria-label="Share on WhatsApp"
+        className="inline-flex min-h-[36px] items-center gap-1.5 rounded-md px-2 py-1.5 text-[0.72rem] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      >
+        <Share2 className="h-3.5 w-3.5" />
+        <span className="hidden sm:inline">Share</span>
+      </button>
+
+      {/* Bookmark */}
+      <button
+        type="button"
+        onClick={onBookmark}
+        aria-label={isBookmarked ? "Remove bookmark" : "Save this ruling"}
+        className={`inline-flex min-h-[36px] items-center gap-1.5 rounded-md px-2 py-1.5 text-[0.72rem] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
+          isBookmarked
+            ? "text-gold hover:bg-muted"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground active:bg-muted"
+        }`}
+      >
+        {isBookmarked ? (
+          <>
+            <BookmarkCheck className="h-3.5 w-3.5 fill-current" />
+            <span className="hidden sm:inline">Saved</span>
+          </>
+        ) : (
+          <>
+            <Bookmark className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Save</span>
+          </>
+        )}
+      </button>
+    </div>
+  )
+}
