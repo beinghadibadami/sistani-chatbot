@@ -1,8 +1,11 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Amiri, Cormorant_Garamond, Inter, Spectral } from "next/font/google"
-import { Analytics } from "@vercel/analytics/next"
+import Script from "next/script"
 import "./globals.css"
+
+// Cloudflare Web Analytics token — set NEXT_PUBLIC_CF_ANALYTICS_TOKEN in your env
+const CF_ANALYTICS_TOKEN = process.env.NEXT_PUBLIC_CF_ANALYTICS_TOKEN
 
 // Display face for the title and headings: high-contrast, calligraphic feel.
 const cormorant = Cormorant_Garamond({
@@ -130,7 +133,13 @@ export default function RootLayout({
       </head>
       <body className="font-sans antialiased">
         {children}
-        <Analytics />
+        {CF_ANALYTICS_TOKEN && (
+          <Script
+            src="https://static.cloudflareinsights.com/beacon.min.js"
+            data-cf-beacon={`{"token": "${CF_ANALYTICS_TOKEN}"}`}
+            strategy="afterInteractive"
+          />
+        )}
       </body>
     </html>
   )

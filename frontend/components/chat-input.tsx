@@ -93,6 +93,9 @@ export default function ChatInput({ onSendMessage, onStop, disabled, seed }: Cha
         <p className="mt-1 px-1 text-center text-[0.62rem] text-muted-foreground/60">
           AI-generated · verify against the cited sources
         </p>
+        <p className="mt-0.5 px-1 text-center text-[0.62rem] text-muted-foreground/70">
+          Built for the community by <span className="font-medium text-foreground/80">Hadi Badami</span>
+        </p>
       </form>
     </div>
   )
