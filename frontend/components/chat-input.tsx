@@ -55,8 +55,8 @@ export default function ChatInput({ onSendMessage, onStop, disabled, seed }: Cha
 
   return (
     <div className="sticky bottom-0 z-20 border-t border-border/60 bg-background/85 backdrop-blur-xl">
-      <form onSubmit={handleSubmit} className="mx-auto max-w-3xl px-4 pb-3 pt-3 sm:px-6 sm:pb-4">
-        <div className="flex items-end gap-2 rounded-2xl border border-border bg-input px-3 py-2 shadow-sm transition-colors focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-ring/25">
+      <form onSubmit={handleSubmit} className="mx-auto max-w-3xl px-3 pb-2 pt-2 sm:px-6 sm:pb-3 sm:pt-3">
+        <div className="flex items-end gap-2 rounded-xl border border-border bg-input px-3 py-1.5 shadow-sm transition-colors focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-ring/25">
           <textarea
             ref={textareaRef}
             dir="auto"
@@ -64,9 +64,9 @@ export default function ChatInput({ onSendMessage, onStop, disabled, seed }: Cha
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask about namaz, roza, hajj, or any ruling… (Gujarati/Hindi mein bhi puch sakte ho)"
+            placeholder="Ask about namaz, roza, hajj, or any ruling…"
             aria-label="Your question"
-            className="max-h-[168px] flex-1 resize-none bg-transparent py-1.5 font-serif text-base leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/70 scrollbar-thin"
+            className="max-h-[120px] flex-1 resize-none bg-transparent py-1.5 font-serif text-base leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/70 scrollbar-thin"
           />
 
           {disabled ? (
@@ -90,8 +90,8 @@ export default function ChatInput({ onSendMessage, onStop, disabled, seed }: Cha
           )}
         </div>
 
-        <p className="mt-1.5 px-1 text-center text-[0.68rem] text-muted-foreground/70">
-          AI-generated · verify consequential matters against the cited sources
+        <p className="mt-1 px-1 text-center text-[0.62rem] text-muted-foreground/60">
+          AI-generated · verify against the cited sources
         </p>
       </form>
     </div>

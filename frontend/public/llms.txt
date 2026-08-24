@@ -1,0 +1,49 @@
+# Sistani Jurisprudence Assistant
+
+> Al-Sistani Chat: Islamic rulings from Grand Ayatollah Sistani
+
+## Description
+
+A free, AI-powered Islamic jurisprudence assistant trained on official sources from Grand Ayatollah Ali al-Sistani's office. Get reliable answers on prayer (salat), fasting (sawm), hajj, zakat, marriage, divorce, purity (tahara), dietary laws, and daily Islamic practices according to Shia Ja'fari fiqh.
+
+## Features
+
+- **Multilingual support**: Ask in English, Hindi, Gujarati, or Urdu
+- **Cited sources**: Every answer includes references to official texts
+- **Real-time responses**: Fast, accurate rulings with streaming output
+- **Mobile-friendly**: Fully responsive design for phones and tablets
+- **Offline-capable**: Save rulings for quick reference later
+
+## Corpus
+
+Our knowledge base includes:
+- Ayatollah Sistani's Q&A database (sistani.org)
+- Islamic Laws (4th Edition)
+- Jurisprudence Made Easy
+- Hajj Rituals
+- Summary of Rules of Worship
+- Women's Religious Rules
+- Nahjul Balagha (selected rulings)
+- Holy Quran (English translation)
+
+## Usage
+
+Visit https://al-sistani-chat.onrender.com and ask any question about Islamic law:
+- "What breaks wudu?"
+- "Is music haram?"
+- "How to perform ghusl?"
+- "namaz ke liye wazu kaise karein" (Hindi/Urdu)
+- "mane kem khbr pade hu baaligh chu k nahi" (Gujarati)
+
+## API
+
+RESTful API available at `/api/chat` (POST) with streaming support via Server-Sent Events.
+
+## Contact
+
+Web: https://al-sistani-chat.onrender.com
+Marja: Grand Ayatollah Sayyid Ali al-Husayni al-Sistani
+
+---
+
+Built with Next.js, FastAPI, FAISS vector search, and Google Gemini/Groq LLMs.

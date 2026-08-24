@@ -29,40 +29,47 @@ export default function MessageBubble({ role, content, streaming, error }: Messa
   }
 
   return (
-    <div className="group relative flex gap-3">
-      {/* Scholar turban avatar */}
-      <div className="mt-1 shrink-0">
+    <div className="group relative">
+      {/* Avatar above text on mobile, beside on desktop */}
+      <div className="mb-2 sm:hidden">
         <ScholarAvatar />
       </div>
 
-      {/* Answer content with gold left border */}
-      <div className="min-w-0 flex-1 border-l-2 border-gold/40 pl-4 sm:pl-5">
-        <div
-          dir="auto"
-          className={`prose-answer ${error ? "text-destructive" : "text-foreground"}`}
-        >
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            components={{
-              table: ({ node, ...props }) => (
-                <div className="overflow-x-auto -mx-1 px-1 my-2">
-                  <table {...props} />
-                </div>
-              ),
-              a: ({ node, ...props }) => (
-                <a {...props} target="_blank" rel="noopener noreferrer" />
-              ),
-            }}
-          >
-            {content}
-          </ReactMarkdown>
+      <div className="flex gap-3">
+        {/* Avatar beside text on desktop only */}
+        <div className="mt-1 hidden shrink-0 sm:block">
+          <ScholarAvatar />
+        </div>
 
-          {streaming && (
-            <span
-              aria-hidden="true"
-              className="animate-caret ml-0.5 inline-block h-[1.05em] w-[2px] translate-y-[0.15em] bg-primary"
-            />
-          )}
+        {/* Answer content — full width on mobile, constrained on desktop */}
+        <div className="min-w-0 flex-1">
+          <div
+            dir="auto"
+            className={`prose-answer ${error ? "text-destructive" : "text-foreground"}`}
+          >
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                table: ({ node, ...props }) => (
+                  <div className="overflow-x-auto -mx-1 px-1 my-2">
+                    <table {...props} />
+                  </div>
+                ),
+                a: ({ node, ...props }) => (
+                  <a {...props} target="_blank" rel="noopener noreferrer" />
+                ),
+              }}
+            >
+              {content}
+            </ReactMarkdown>
+
+            {streaming && (
+              <span
+                aria-hidden="true"
+                className="animate-caret ml-0.5 inline-block h-[1.05em] w-[2px] translate-y-[0.15em] bg-primary"
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -167,3 +167,70 @@ def rewrite_query(
         return rewritten, rewritten.lower() != question.lower()
     except Exception:
         return question, False
+
+
+
+def translate_query_to_english(query: str) -> str:
+    """Translate non-English queries to English for better retrieval.
+    
+    The corpus is in English, so Hindi/Gujarati/Urdu queries won't match BM25 keywords.
+    This translates the query while preserving intent and key terms.
+    """
+    # Skip translation if query contains common English Islamic terms
+    english_indicators = [
+        "what", "is", "are", "the", "how", "when", "why", "where", "can", "do", "does",
+        "prayer", "fasting", "zakat", "hajj", "wudu", "ghusl", "prohibited", "allowed",
+        "permissible", "ruling", "marriage", "divorce", "inheritance",
+    ]
+    
+    lower = query.lower()
+    # If query has 2+ English indicator words, it's probably already English
+    matches = sum(1 for word in english_indicators if f" {word} " in f" {lower} " or lower.startswith(word + " ") or lower.endswith(" " + word))
+    if matches >= 2:
+        return query
+    
+    # Hindi/Urdu/Gujarati indicators (written in Latin/Devanagari)
+    hindi_guj_indicators = [
+        # Hindi/Urdu common question words & verbs
+        "kya", "mai", "mein", "kar", "karu", "kare", "karein", "ke", "ki", "liye", "liya",
+        "kis", "kaise", "kaun", "kab", "kahan", "kyun", "hoon", "hai", "hain", "tha", "the",
+        "aur", "ko", "se", "tak", "par", "mein", "pe", "ka", "koi", "yeh", "woh", "agar",
+        "toh", "phir", "kuch", "sab", "sabhi", "kitna", "jab", "jo", "bhi",
+        # Gujarati-specific (romanized)
+        "shu", "chhe", "che", "chey", "tame", "ame", "ema", "emane", "karva", "karvu", "kevi",
+        "kevu", "mate", "kyare", "ketla", "ketli", "kya", "kone", "ane", "pan", "thi", "ma",
+        "nu", "ne", "na", "ni", "nathi", "nai", "java", "aave", "ave", "joi", "joie",
+    ]
+    hindi_matches = sum(1 for word in hindi_guj_indicators if word in lower)
+    
+    # If 2+ Hindi words detected or query has non-Latin script, translate
+    has_non_latin = any(ord(c) > 0x024F for c in query)
+    
+    if hindi_matches < 2 and not has_non_latin:
+        return query  # Probably English or ambiguous — pass through
+    
+    from rag.providers import default_provider, gemini_generate, groq_generate
+    
+    system = """You translate non-English queries about Islamic law into clear, \
+search-friendly English. Output the complete translation. Be precise with religious terms.
+
+Examples:
+- "kya mai muth maar sakta hoon" → "is masturbation allowed in Islam"
+- "namaz ke liye wazu kaise karein" → "how to perform wudu for prayer"
+- "roza kis waqt toot jata hai" → "what breaks a fast"
+- "nikah ki sharait kya hain" → "what are the conditions for marriage"
+- "mane kem khbr pade hu baaligh chu k nahi" → "how can I know if I have reached puberty"
+"""
+    
+    messages = [
+        {"role": "system", "content": system},
+        {"role": "user", "content": f"Query: {query}\n\nEnglish translation:"},
+    ]
+    
+    provider = default_provider()
+    if provider == "groq":
+        result = groq_generate(messages, max_tokens=120, temperature=0.3, reasoning_effort="low")
+    else:
+        result = gemini_generate(messages, max_tokens=120, temperature=0.3)
+    
+    return result.strip().strip('"').strip().replace("English translation:", "").strip()
